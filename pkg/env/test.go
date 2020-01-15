@@ -20,11 +20,14 @@ type Test struct {
 
 	L net.Listener
 
-	TestSubscriptionID string
-	TestLocation       string
-	TestResourceGroup  string
-	TestDomain         string
-	TestVNetName       string
+	TestSubscriptionID           string
+	TestLocation                 string
+	TestResourceGroup            string
+	TestDomain                   string
+	TestCosmosDBHostname         string
+	TestCosmosDBPrimaryMasterKey string
+	TestDatabaseName             string
+	TestVNetName                 string
 
 	TLSKey   *rsa.PrivateKey
 	TLSCerts []*x509.Certificate
@@ -35,6 +38,14 @@ func (t *Test) SetClientAuthorizer(clientauthorizer clientauthorizer.ClientAutho
 		t.prod = &prod{}
 	}
 	t.ClientAuthorizer = clientauthorizer
+}
+
+func (t *Test) CosmosDB() (string, string) {
+	return t.TestCosmosDBHostname, t.TestCosmosDBPrimaryMasterKey
+}
+
+func (t *Test) DatabaseName() string {
+	return t.TestDatabaseName
 }
 
 func (t *Test) Domain() string {
