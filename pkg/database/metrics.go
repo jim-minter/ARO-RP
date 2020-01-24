@@ -15,18 +15,12 @@ func (db *Database) emitMetrics(ctx context.Context) {
 	t := time.NewTicker(time.Minute)
 	defer t.Stop()
 
-	for {
+	for range t.C {
 		i, err := db.OpenShiftClusters.QueueLength(ctx)
 		if err != nil {
 			db.log.Error(err)
 		} else {
-			db.m.EmitGauge("database.queue.openshiftclusters.length", int64(i), nil)
-		}
-
-		select {
-		case <-t.C:
-			return
+			db.m.EmitGauge("database.openshiftclusters.queue.length", int64(i), nil)
 		}
 	}
-
 }

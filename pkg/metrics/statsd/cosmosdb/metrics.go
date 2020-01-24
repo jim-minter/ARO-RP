@@ -40,34 +40,37 @@ func (t *tracerRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) 
 	var ru float64
 	// Sometimes we get request-charge="" because pkranges API is free
 	// We log this on debug mode only and ignore
-	if resp.Header.Get("x-ms-request-charge") != "" &&
-		resp.Header.Get("x-ms-request-charge") != `""` {
-		f, err := strconv.ParseFloat(strings.Trim(resp.Header.Get("x-ms-request-charge"), "\""), 64)
+	requestCharge := strings.Trim(resp.Header.Get("x-ms-request-charge"), `"`)
+	if requestCharge != "" {
+		ru, err = strconv.ParseFloat(requestCharge, 64)
 		if err != nil {
-			// we don't want to kill all DB call if this changes
-			t.log.Errorf("error: %v", err)
-			err = nil
-		} else {
-			ru = f
+			// we don't want to kill all DB calls if this fails
+			t.log.Error(err)
 		}
 	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) >= 2 && parts[len(parts)-2] == "docs" {
+		parts[len(parts)-1] = "{id}"
+	}
+	path := strings.Join(parts, "/")
 
 	t.m.EmitGauge("client.cosmosdb.count", 1, map[string]string{
 		"code": strconv.Itoa(resp.StatusCode),
 		"verb": r.Method,
-		"path": r.URL.Path,
+		"path": path,
 	})
 
 	t.m.EmitFloat("client.cosmosdb.duration", time.Now().Sub(start).Seconds(), map[string]string{
 		"code": strconv.Itoa(resp.StatusCode),
 		"verb": r.Method,
-		"path": r.URL.Path,
+		"path": path,
 	})
 
 	t.m.EmitFloat("client.cosmosdb.requestunits", ru, map[string]string{
 		"code": strconv.Itoa(resp.StatusCode),
 		"verb": r.Method,
-		"path": r.URL.Path,
+		"path": path,
 	})
 
 	return resp, err
