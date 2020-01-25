@@ -32,7 +32,7 @@ type Database struct {
 
 // NewDatabase returns a new Database
 func NewDatabase(ctx context.Context, log *logrus.Entry, env env.Interface, m metrics.Interface, uuid string) (db *Database, err error) {
-	databaseAccount, masterKey := env.CosmosDB()
+	databaseHost, masterKey := env.CosmosDB()
 
 	h := &codec.JsonHandle{
 		BasicHandle: codec.BasicHandle{
@@ -56,7 +56,7 @@ func NewDatabase(ctx context.Context, log *logrus.Entry, env env.Interface, m me
 		Timeout: 30 * time.Second,
 	}
 
-	dbc, err := cosmosdb.NewDatabaseClient(log, c, h, databaseAccount, masterKey)
+	dbc, err := cosmosdb.NewDatabaseClient(log, c, h, databaseHost, masterKey)
 	if err != nil {
 		return nil, err
 	}

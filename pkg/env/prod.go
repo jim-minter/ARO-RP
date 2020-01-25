@@ -233,7 +233,7 @@ func (p *prod) ClustersKeyvaultURI() string {
 }
 
 func (p *prod) CosmosDB() (string, string) {
-	return p.cosmosDBAccountName, p.cosmosDBPrimaryMasterKey
+	return p.cosmosDBAccountName + ".documents.azure.com", p.cosmosDBPrimaryMasterKey
 }
 
 func (p *prod) DatabaseName() string {
