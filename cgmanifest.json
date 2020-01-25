@@ -4,7 +4,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "b4cdc8d6eb508c4e74df26094d1adb678c87f818",
+                    "commitHash": "6daa679260d92196ffca2362d652c924fdcb7a22",
                     "repositoryUrl": "https://cloud.google.com/go/compute/metadata/"
                 }
             }
@@ -103,7 +103,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "cd610ee76770524d9f1135bfdc241e1b60dfd00b",
+                    "commitHash": "6c32c9957b355491e82635c1d318e7614a997428",
                     "repositoryUrl": "https://github.com/aws/aws-sdk-go/"
                 }
             }
@@ -337,7 +337,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "9fa652df1129bef0e734c9cf9bf6dbae9ef3b9fa",
+                    "commitHash": "3dcdcb6994c4de42a73bd2e4790178be3ed4554b",
                     "repositoryUrl": "https://github.com/golang/mock/"
                 }
             }
@@ -355,7 +355,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "f140a6486e521aad38f5917de355cbf147cc0496",
+                    "commitHash": "db92cf7ae75e4a7a28abc005addab2b394362888",
                     "repositoryUrl": "https://github.com/google/gofuzz/"
                 }
             }
@@ -373,7 +373,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "ab0dd09aa10e2952b28e12ecd35681b20463ebab",
+                    "commitHash": "99384834bf8c58ce7ab88db353283bedcb53e1ca",
                     "repositoryUrl": "https://github.com/googleapis/gnostic/"
                 }
             }
@@ -427,7 +427,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "691a7a9f56ae38b2109e491be76bc52175164cd7",
+                    "commitHash": "1635785acf253fa8b060d9d136eb3c7c0d8a1a87",
                     "repositoryUrl": "https://github.com/jim-minter/go-cosmosdb/"
                 }
             }
@@ -526,7 +526,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "31745d66dd679ac0ac4f8d3ecff168fce6170c6a",
+                    "commitHash": "7b513a986450394f7bbf1476909911b3aa3a55ce",
                     "repositoryUrl": "https://github.com/mattn/go-isatty/"
                 }
             }
@@ -607,7 +607,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "ce5d301e555bb672c693c099ba6ca5087b06c0b4",
+                    "commitHash": "388ac7e50a3abf0798010091d5094171f4aefc0b",
                     "repositoryUrl": "https://github.com/onsi/ginkgo/"
                 }
             }
@@ -616,7 +616,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "f9a52764bd5a0fd2d201bcca584351d03b72f8da",
+                    "commitHash": "22a9feb22fe99439870ed2e013401725a9d495df",
                     "repositoryUrl": "https://github.com/onsi/gomega/"
                 }
             }
@@ -670,7 +670,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "fa06f17ab6de64c341a4d7bbe58f0cb8265e6f9c",
+                    "commitHash": "1ea34db53e72fefeae29fa1da915644d8281caf1",
                     "repositoryUrl": "https://github.com/openshift/cloud-credential-operator/"
                 }
             }
@@ -724,7 +724,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "a3345f5a437a8ca82be683c7c38fe49de64c2b5f",
+                    "commitHash": "809fd5a7bae0430305b192cf58d2599238db0d55",
                     "repositoryUrl": "https://github.com/openshift/machine-api-operator/"
                 }
             }
@@ -940,7 +940,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "34d275377bf96a094e8d5b0c61750ddd54cd6b36",
+                    "commitHash": "9fbb57f87de9ccfe3a99d4e3270ce8a926ebba4f",
                     "repositoryUrl": "https://golang.org/x/sys/"
                 }
             }
@@ -967,8 +967,17 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "dbc83e6dc05ede08439f32f7024b36e4e9e5b406",
+                    "commitHash": "8fe064f891f2084bc046f3ebf13b0c2258993b8c",
                     "repositoryUrl": "https://golang.org/x/tools/"
+                }
+            }
+        },
+        {
+            "component": {
+                "type": "git",
+                "git": {
+                    "commitHash": "9bdfabe68543c54f90421aeb9a60ef8061b5b544",
+                    "repositoryUrl": "https://golang.org/x/xerrors/"
                 }
             }
         },
@@ -994,7 +1003,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "32f20d992d240fbca6ef7dec6c05d1f024314e02",
+                    "commitHash": "0452cf42e150a6aeb2c8615de02e260ae83d9873",
                     "repositoryUrl": "https://google.golang.org/genproto/"
                 }
             }
@@ -1057,7 +1066,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "1f64d6156d11335c3f22d9330b0ad14fc1e789ce",
+                    "commitHash": "53403b58ad1b561927d19068c655246f2db79d48",
                     "repositoryUrl": "https://gopkg.in/yaml.v2/"
                 }
             }
@@ -1102,7 +1111,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "30be4d16710ac61bce31eb28a01054596fe6a9f1",
+                    "commitHash": "bf4fb3bd569c8c84504d856598edbc66c10d8744",
                     "repositoryUrl": "https://github.com/kubernetes/kube-openapi/"
                 }
             }
@@ -1111,7 +1120,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "581e00157fb1a0435d4fac54a52d1ca1e481d60e",
+                    "commitHash": "861946025e3491219eaccb1bf693e23df70c2fa8",
                     "repositoryUrl": "https://github.com/kubernetes/utils/"
                 }
             }
@@ -1120,7 +1129,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "8708118cd0125189f0ec27025204a750e18e3a15",
+                    "commitHash": "59ba191b9f96777f9e1deaa54d022ed3a6c19744",
                     "repositoryUrl": "https://sigs.k8s.io/cluster-api-provider-aws/"
                 }
             }
@@ -1138,7 +1147,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "ffbc0f0cf8236f398ae48abffd662f01b0d1a876",
+                    "commitHash": "86e93b0c54dbf72db95c7320548b9a22ef1193fa",
                     "repositoryUrl": "https://sigs.k8s.io/cluster-api-provider-openstack/"
                 }
             }

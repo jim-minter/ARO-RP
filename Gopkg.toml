@@ -26,6 +26,10 @@ required = [
   version = "1.7.3"
 
 [[constraint]]
+  name = "github.com/jim-minter/go-cosmosdb"
+  branch = "testing"
+
+[[constraint]]
   name = "github.com/openshift/api"
   branch = "release-4.3"
 
@@ -72,6 +76,10 @@ required = [
   name = "k8s.io/client-go"
   branch = "origin-4.3-kubernetes-1.16.2"
   source = "https://github.com/openshift/kubernetes-client-go"
+
+[[override]]
+  name = "k8s.io/utils"
+  branch = "master"
 
 [[override]]
   name = "sigs.k8s.io/cluster-api-provider-azure"
