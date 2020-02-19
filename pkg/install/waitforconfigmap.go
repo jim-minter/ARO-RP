@@ -9,6 +9,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
+	operatorclient "github.com/openshift/client-go/operator/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -42,21 +43,29 @@ func (i *Installer) waitForClusterVersion(ctx context.Context) error {
 	}, timeoutCtx.Done())
 }
 
-func (i *Installer) waitForBootstrapConfigmap(ctx context.Context) error {
+func (i *Installer) initializeKubernetesClients(ctx context.Context) error {
+	// call this at some point at which the cluster is basically up?
+
 	restConfig, err := restconfig.RestConfig(ctx, i.env, i.doc.OpenShiftCluster)
 	if err != nil {
 		return err
 	}
 
-	cli, err := kubernetes.NewForConfig(restConfig)
+	i.kubernetescli, err = kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return err
 	}
 
+	i.operatorcli, err = operatorclient.NewForConfig(restConfig)
+	return err
+}
+
+func (i *Installer) waitForBootstrapConfigmap(ctx context.Context) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
+
 	return wait.PollImmediateUntil(10*time.Second, func() (bool, error) {
-		cm, err := cli.CoreV1().ConfigMaps("kube-system").Get("bootstrap", metav1.GetOptions{})
+		cm, err := i.kubernetescli.CoreV1().ConfigMaps("kube-system").Get("bootstrap", metav1.GetOptions{})
 		return err == nil && cm.Data["status"] == "complete", nil
 
 	}, timeoutCtx.Done())

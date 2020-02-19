@@ -20,10 +20,12 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
+	operatorclient "github.com/openshift/client-go/operator/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/database"
@@ -61,6 +63,13 @@ type Installer struct {
 	keyvault        keyvault.Manager
 	privateendpoint privateendpoint.Manager
 	subnet          subnet.Manager
+
+	kubernetescli kubernetes.Interface
+	operatorcli   operatorclient.Interface
+	// there will be more of these...
+
+	// it is likely that the graph will want to be pulled out and put here at
+	// some point as well
 }
 
 // NewInstaller creates a new Installer
@@ -129,6 +138,7 @@ func (i *Installer) Install(ctx context.Context, installConfig *installconfig.In
 			i.createPrivateEndpoint,
 			i.updateAPIIP,
 			i.createCertificates,
+			i.initializeKubernetesClients, // may want to move this above later
 			i.waitForBootstrapConfigmap,
 			i.incrInstallPhase,
 		},
