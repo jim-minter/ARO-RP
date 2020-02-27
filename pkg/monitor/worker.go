@@ -166,5 +166,7 @@ func (mon *monitor) workOne(ctx context.Context, log *logrus.Entry, doc *api.Ope
 		"code":     strconv.FormatInt(int64(statusCode), 10),
 	})
 
-	return nil
+	// TODO: workOne should have a table of checks including the /healthz check
+	// and checkPrometheus
+	return mon.checkPrometheus(ctx, restConfig, doc)
 }
