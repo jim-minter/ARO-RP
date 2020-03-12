@@ -1,0 +1,16 @@
+{
+    "extensions": {
+        "aro": [
+            {
+                "downloadUrl": "https://az.aroapp.io/aro-1.0.0-py2.py3-none-any.whl",
+                "filename": "aro-1.0.0-py2.py3-none-any.whl",
+                "metadata": {
+                    "azext.minCliCoreVersion": "2.0.67",
+                    "version": "1.0.0"
+                },
+                "sha256Digest": "677de627be66f06436eb4bb74fce2e7a98b6137f1e7e9febff7af7a264951e4d"
+            }
+        ]
+    },
+    "formatVersion": "1"
+}
