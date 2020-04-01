@@ -26,6 +26,7 @@ type Manager struct {
 	env          env.Interface
 	db           database.OpenShiftClusters
 	billing      database.Billing
+	sub          database.Subscriptions
 	fpAuthorizer autorest.Authorizer
 
 	ocDynamicValidator validate.OpenShiftClusterDynamicValidator
@@ -41,7 +42,7 @@ type Manager struct {
 	doc *api.OpenShiftClusterDocument
 }
 
-func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, doc *api.OpenShiftClusterDocument) (*Manager, error) {
+func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, sub database.Subscriptions, doc *api.OpenShiftClusterDocument) (*Manager, error) {
 	r, err := azure.ParseResourceID(doc.OpenShiftCluster.ID)
 	if err != nil {
 		return nil, err
@@ -75,6 +76,7 @@ func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClus
 		env:          _env,
 		db:           db,
 		billing:      billing,
+		sub:          sub,
 		fpAuthorizer: fpAuthorizer,
 
 		ocDynamicValidator: validate.NewOpenShiftClusterDynamicValidator(_env),

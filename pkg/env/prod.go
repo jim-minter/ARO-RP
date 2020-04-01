@@ -26,6 +26,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/dns"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/documentdb"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/keyvault"
+	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/storage"
 	"github.com/Azure/ARO-RP/pkg/util/clientauthorizer"
 	"github.com/Azure/ARO-RP/pkg/util/instancemetadata"
 	"github.com/Azure/ARO-RP/pkg/util/pem"
@@ -36,7 +37,8 @@ type prod struct {
 	armClientAuthorizer   clientauthorizer.ClientAuthorizer
 	adminClientAuthorizer clientauthorizer.ClientAuthorizer
 
-	keyvault basekeyvault.BaseClient
+	keyvault   basekeyvault.BaseClient
+	e2estorage storage.AccountsClient
 
 	acrName                  string
 	clustersKeyvaultURI      string
@@ -54,6 +56,9 @@ type prod struct {
 	clustersGenevaLoggingPrivateKey    *rsa.PrivateKey
 	clustersGenevaLoggingConfigVersion string
 	clustersGenevaLoggingEnvironment   string
+
+	e2eStorageAccountName string
+	e2eStorageAccountKey  string
 
 	log *logrus.Entry
 }
@@ -116,6 +121,8 @@ func newProd(ctx context.Context, log *logrus.Entry, instancemetadata instanceme
 
 	p.clustersGenevaLoggingPrivateKey = clustersGenevaLoggingPrivateKey
 	p.clustersGenevaLoggingCertificate = clustersGenevaLoggingCertificates[0]
+
+	p.e2estorage = storage.NewAccountsClient("33cfc4e8-e3ac-4b48-8352-914daac4f924", rpAuthorizer)
 
 	if p.ACRResourceID() != "" { // TODO: ugh!
 		acrResource, err := azure.ParseResourceID(p.ACRResourceID())
@@ -352,4 +359,19 @@ func (p *prod) Zones(vmSize string) ([]string, error) {
 		return nil, fmt.Errorf("zone information not found for vm size %q", vmSize)
 	}
 	return zones, nil
+}
+
+func (p *prod) E2EStorageAccountName() string {
+	return "v4arobillinge2e"
+}
+
+func (p *prod) E2EStorageAccountKey(ctx context.Context) (string, error) {
+	if p.e2eStorageAccountKey == "" {
+		keys, err := p.e2estorage.ListKeys(ctx, "billing-global", p.E2EStorageAccountName(), "")
+		if err != nil {
+			return "", err
+		}
+		p.e2eStorageAccountKey = *(*keys.Keys)[0].Value
+	}
+	return p.e2eStorageAccountKey, nil
 }
