@@ -9,9 +9,11 @@ import (
 	"strings"
 
 	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/azure"
 
 	"github.com/Azure/ARO-RP/pkg/database/cosmosdb"
 	"github.com/Azure/ARO-RP/pkg/env"
+	"github.com/Azure/ARO-RP/pkg/util/billing"
 	"github.com/Azure/ARO-RP/pkg/util/stringutils"
 	"github.com/Azure/ARO-RP/pkg/util/subnet"
 )
@@ -108,9 +110,28 @@ func (m *Manager) Delete(ctx context.Context) error {
 	}
 
 	m.log.Printf("updating billing record with deletion time")
-	_, err = m.billing.MarkForDeletion(ctx, m.doc.ID)
+	billingDoc, err := m.billing.MarkForDeletion(ctx, m.doc.ID)
 	if cosmosdb.IsErrorStatusCode(err, http.StatusNotFound) {
 		return nil
+	}
+
+	// Validate if E2E Feature is registred
+	resource, err := azure.ParseResourceID(billingDoc.Key)
+	if err != nil {
+		return err
+	}
+
+	subDocument, err := m.sub.Get(ctx, resource.SubscriptionID)
+	if err != nil {
+		return err
+	}
+
+	if billing.IsSubscriptionRegisteredToE2E(subDocument.Subscription.Properties) {
+		// We are not failing the operation if we cannot write to e2e storage account, just warning
+		errBlob := billing.CreateOrUpdateE2Eblob(ctx, m.env, *billingDoc, resource)
+		if errBlob != nil {
+			m.log.Warnf("CreateOrUpdateE2Eblob failed : %s", errBlob.Error())
+		}
 	}
 	return err
 }
