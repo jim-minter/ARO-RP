@@ -57,8 +57,8 @@ type prod struct {
 	clustersGenevaLoggingConfigVersion string
 	clustersGenevaLoggingEnvironment   string
 
-	e2eStorageAccountName string
-	e2eStorageAccountKey  string
+	e2eStorageAccountName  string
+	e2eStorageAccountSubID string
 
 	log *logrus.Entry
 }
@@ -122,7 +122,8 @@ func newProd(ctx context.Context, log *logrus.Entry, instancemetadata instanceme
 	p.clustersGenevaLoggingPrivateKey = clustersGenevaLoggingPrivateKey
 	p.clustersGenevaLoggingCertificate = clustersGenevaLoggingCertificates[0]
 
-	p.e2estorage = storage.NewAccountsClient("33cfc4e8-e3ac-4b48-8352-914daac4f924", rpAuthorizer)
+	p.e2eStorageAccountName = "v4arobillinge2e"
+	p.e2eStorageAccountSubID = "33cfc4e8-e3ac-4b48-8352-914daac4f924"
 
 	if p.ACRResourceID() != "" { // TODO: ugh!
 		acrResource, err := azure.ParseResourceID(p.ACRResourceID())
@@ -362,16 +363,9 @@ func (p *prod) Zones(vmSize string) ([]string, error) {
 }
 
 func (p *prod) E2EStorageAccountName() string {
-	return "v4arobillinge2e"
+	return p.e2eStorageAccountName
 }
 
-func (p *prod) E2EStorageAccountKey(ctx context.Context) (string, error) {
-	if p.e2eStorageAccountKey == "" {
-		keys, err := p.e2estorage.ListKeys(ctx, "billing-global", p.E2EStorageAccountName(), "")
-		if err != nil {
-			return "", err
-		}
-		p.e2eStorageAccountKey = *(*keys.Keys)[0].Value
-	}
-	return p.e2eStorageAccountKey, nil
+func (p *prod) E2EStorageAccountSubID() string {
+	return p.e2eStorageAccountSubID
 }

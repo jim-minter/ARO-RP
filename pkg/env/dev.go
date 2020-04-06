@@ -28,7 +28,6 @@ import (
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/graphrbac"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/authorization"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/features"
-	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/storage"
 	"github.com/Azure/ARO-RP/pkg/util/clientauthorizer"
 	"github.com/Azure/ARO-RP/pkg/util/instancemetadata"
 )
@@ -138,8 +137,6 @@ func newDev(ctx context.Context, log *logrus.Entry, instancemetadata instancemet
 	if err != nil {
 		return nil, err
 	}
-
-	d.e2estorage = storage.NewAccountsClient("0cc1cafa-578f-4fa5-8d6b-ddfd8d82e6ea", armAuthorizer)
 
 	return d, nil
 }
@@ -271,13 +268,6 @@ func (d *dev) E2EStorageAccountName() string {
 	return "arov4e2eint"
 }
 
-func (d *dev) E2EStorageAccountKey(ctx context.Context) (string, error) {
-	if d.e2eStorageAccountKey == "" {
-		keys, err := d.e2estorage.ListKeys(ctx, "global-infra", d.E2EStorageAccountName(), "")
-		if err != nil {
-			return "", err
-		}
-		d.e2eStorageAccountKey = *(*keys.Keys)[0].Value
-	}
-	return d.e2eStorageAccountKey, nil
+func (d *dev) E2EStorageAccountSubID() string {
+	return "0cc1cafa-578f-4fa5-8d6b-ddfd8d82e6ea"
 }

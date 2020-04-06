@@ -41,6 +41,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/features"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/network"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/storage"
+	"github.com/Azure/ARO-RP/pkg/util/billing"
 	"github.com/Azure/ARO-RP/pkg/util/dns"
 	"github.com/Azure/ARO-RP/pkg/util/encryption"
 	"github.com/Azure/ARO-RP/pkg/util/keyvault"
@@ -69,6 +70,7 @@ type Installer struct {
 	deployments       features.DeploymentsClient
 	groups            features.ResourceGroupsClient
 	accounts          storage.AccountsClient
+	e2e               billing.E2EManager
 
 	dns             dns.Manager
 	keyvault        keyvault.Manager
@@ -94,7 +96,7 @@ type condition struct {
 }
 
 // NewInstaller creates a new Installer
-func NewInstaller(ctx context.Context, log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, doc *api.OpenShiftClusterDocument, sub database.Subscriptions) (*Installer, error) {
+func NewInstaller(ctx context.Context, log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, sub database.Subscriptions, doc *api.OpenShiftClusterDocument, e2e billing.E2EManager) (*Installer, error) {
 	r, err := azure.ParseResourceID(doc.OpenShiftCluster.ID)
 	if err != nil {
 		return nil, err
@@ -138,6 +140,7 @@ func NewInstaller(ctx context.Context, log *logrus.Entry, _env env.Interface, db
 		deployments:       features.NewDeploymentsClient(r.SubscriptionID, fpAuthorizer),
 		groups:            features.NewResourceGroupsClient(r.SubscriptionID, fpAuthorizer),
 		accounts:          storage.NewAccountsClient(r.SubscriptionID, fpAuthorizer),
+		e2e:               e2e,
 
 		dns:             dns.NewManager(_env, localFPAuthorizer),
 		keyvault:        keyvault.NewManager(localFPKVAuthorizer),

@@ -23,9 +23,9 @@ const (
 	SubscriptionStateSuspended    SubscriptionState = "Suspended"
 	SubscriptionStateDeleted      SubscriptionState = "Deleted"
 
-	// SubscriptionFeatureE2E is the feature in the subscription that is used
+	// FeatureSaveAROTestConfig is the feature in the subscription that is used
 	// to indicate if we need to save ARO cluster config into the E2E StorageAccount
-	SubscriptionFeatureE2E string = "Microsoft.RedHatOpenShift/SaveAROTestConfig"
+	FeatureSaveAROTestConfig string = "Microsoft.RedHatOpenShift/SaveAROTestConfig"
 )
 
 // SubscriptionProperties represents subscription properties

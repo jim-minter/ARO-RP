@@ -40,7 +40,7 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 				TenantID: mockSubID,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
-						Name:  api.SubscriptionFeatureE2E,
+						Name:  api.FeatureSaveAROTestConfig,
 						State: "Registered",
 					},
 				},
@@ -79,7 +79,7 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 				TenantID: tenantIDAME,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
-						Name:  api.SubscriptionFeatureE2E,
+						Name:  api.FeatureSaveAROTestConfig,
 						State: "Registered",
 					},
 				},
@@ -92,7 +92,7 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 				TenantID: tenantIDMSFT,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
-						Name:  api.SubscriptionFeatureE2E,
+						Name:  api.FeatureSaveAROTestConfig,
 						State: "Registered",
 					},
 				},

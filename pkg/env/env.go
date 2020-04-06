@@ -19,14 +19,13 @@ import (
 )
 
 const (
-	RPFirstPartySecretName         = "rp-firstparty"
-	RPServerSecretName             = "rp-server"
-	ClusterLoggingSecretName       = "cluster-mdsd"
-	EncryptionSecretName           = "encryption-key"
-	FrontendEncryptionSecretName   = "fe-encryption-key"
-	RPLoggingSecretName            = "rp-mdsd"
-	RPMonitoringSecretName         = "rp-mdm"
-	E2EStorageAccountKeySecretName = "e2e-storageaccount-key"
+	RPFirstPartySecretName       = "rp-firstparty"
+	RPServerSecretName           = "rp-server"
+	ClusterLoggingSecretName     = "cluster-mdsd"
+	EncryptionSecretName         = "encryption-key"
+	FrontendEncryptionSecretName = "fe-encryption-key"
+	RPLoggingSecretName          = "rp-mdsd"
+	RPMonitoringSecretName       = "rp-mdm"
 )
 
 type Interface interface {
@@ -53,7 +52,7 @@ type Interface interface {
 	ACRResourceID() string
 	ACRName() string
 	E2EStorageAccountName() string
-	E2EStorageAccountKey(context.Context) (string, error)
+	E2EStorageAccountSubID() string
 }
 
 func NewEnv(ctx context.Context, log *logrus.Entry) (Interface, error) {

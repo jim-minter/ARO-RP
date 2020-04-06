@@ -14,6 +14,7 @@ import (
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/database/cosmosdb"
+	mock_billing "github.com/Azure/ARO-RP/pkg/util/mocks/billing"
 	mock_database "github.com/Azure/ARO-RP/pkg/util/mocks/database"
 )
 
@@ -26,7 +27,7 @@ func TestCreateBillingEntry(t *testing.T) {
 	type test struct {
 		name         string
 		openshiftdoc *api.OpenShiftClusterDocument
-		mocks        func(*test, *mock_database.MockBilling, *mock_database.MockSubscriptions)
+		mocks        func(*test, *mock_database.MockBilling, *mock_billing.MockE2EManager)
 		wantError    error
 	}
 
@@ -46,7 +47,7 @@ func TestCreateBillingEntry(t *testing.T) {
 					Location: location,
 				},
 			},
-			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
+			mocks: func(tt *test, billing *mock_database.MockBilling, e2e *mock_billing.MockE2EManager) {
 				billingDoc := &api.BillingDocument{
 					Key:                       tt.openshiftdoc.Key,
 					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
@@ -61,15 +62,9 @@ func TestCreateBillingEntry(t *testing.T) {
 					Create(gomock.Any(), billingDoc).
 					Return(billingDoc, nil)
 
-				subscription.EXPECT().
-					Get(gomock.Any(), mockSubID).
-					Return(&api.SubscriptionDocument{
-						Subscription: &api.Subscription{
-							Properties: &api.SubscriptionProperties{
-								RegisteredFeatures: []api.RegisteredFeatureProfile{},
-							},
-						},
-					}, nil)
+				e2e.EXPECT().
+					CreateOrUpdateE2EBlob(gomock.Any(), gomock.Any(), gomock.Any(), billingDoc).
+					Return(nil)
 			},
 		},
 		{
@@ -87,7 +82,7 @@ func TestCreateBillingEntry(t *testing.T) {
 					Location: location,
 				},
 			},
-			mocks: func(tt *test, billing *mock_database.MockBilling, _ *mock_database.MockSubscriptions) {
+			mocks: func(tt *test, billing *mock_database.MockBilling, _ *mock_billing.MockE2EManager) {
 				billingDoc := &api.BillingDocument{
 					Key:                       tt.openshiftdoc.Key,
 					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
@@ -119,7 +114,7 @@ func TestCreateBillingEntry(t *testing.T) {
 					Location: location,
 				},
 			},
-			mocks: func(tt *test, billing *mock_database.MockBilling, _ *mock_database.MockSubscriptions) {
+			mocks: func(tt *test, billing *mock_database.MockBilling, _ *mock_billing.MockE2EManager) {
 				billingDoc := &api.BillingDocument{
 					Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
 					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
@@ -143,14 +138,14 @@ func TestCreateBillingEntry(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
 			billing := mock_database.NewMockBilling(controller)
-			subscription := mock_database.NewMockSubscriptions(controller)
+			e2e := mock_billing.NewMockE2EManager(controller)
 			log := logrus.NewEntry(logrus.StandardLogger())
-			tt.mocks(tt, billing, subscription)
+			tt.mocks(tt, billing, e2e)
 			i := &Installer{
 				log:     log,
 				doc:     tt.openshiftdoc,
 				billing: billing,
-				sub:     subscription,
+				e2e:     e2e,
 			}
 
 			err := i.createBillingRecord(ctx)

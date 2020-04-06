@@ -15,6 +15,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/util/acrtoken"
 	pkgacrtoken "github.com/Azure/ARO-RP/pkg/util/acrtoken"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/features"
+	"github.com/Azure/ARO-RP/pkg/util/billing"
 	"github.com/Azure/ARO-RP/pkg/util/dns"
 	"github.com/Azure/ARO-RP/pkg/util/keyvault"
 	"github.com/Azure/ARO-RP/pkg/util/privateendpoint"
@@ -38,11 +39,12 @@ type Manager struct {
 	privateendpoint privateendpoint.Manager
 	subnet          subnet.Manager
 	acrtoken        acrtoken.Manager
+	e2e             billing.E2EManager
 
 	doc *api.OpenShiftClusterDocument
 }
 
-func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, sub database.Subscriptions, doc *api.OpenShiftClusterDocument) (*Manager, error) {
+func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, sub database.Subscriptions, doc *api.OpenShiftClusterDocument, e2e billing.E2EManager) (*Manager, error) {
 	r, err := azure.ParseResourceID(doc.OpenShiftCluster.ID)
 	if err != nil {
 		return nil, err
@@ -88,6 +90,7 @@ func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClus
 		privateendpoint: privateendpoint.NewManager(_env, localFPAuthorizer),
 		acrtoken:        acrtoken,
 		subnet:          subnet.NewManager(r.SubscriptionID, fpAuthorizer),
+		e2e:             e2e,
 
 		doc: doc,
 	}
