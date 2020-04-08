@@ -95,7 +95,7 @@ type condition struct {
 }
 
 // NewInstaller creates a new Installer
-func NewInstaller(ctx context.Context, log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, sub database.Subscriptions, doc *api.OpenShiftClusterDocument, e2e billing.E2EManager) (*Installer, error) {
+func NewInstaller(ctx context.Context, log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing billing.Manager, sub database.Subscriptions, doc *api.OpenShiftClusterDocument) (*Installer, error) {
 	r, err := azure.ParseResourceID(doc.OpenShiftCluster.ID)
 	if err != nil {
 		return nil, err
