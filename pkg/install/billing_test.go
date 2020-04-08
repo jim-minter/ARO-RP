@@ -6,146 +6,57 @@ package install
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus"
 
 	"github.com/Azure/ARO-RP/pkg/api"
-	"github.com/Azure/ARO-RP/pkg/database/cosmosdb"
 	mock_billing "github.com/Azure/ARO-RP/pkg/util/mocks/billing"
-	mock_database "github.com/Azure/ARO-RP/pkg/util/mocks/database"
 )
 
 func TestCreateBillingEntry(t *testing.T) {
 	ctx := context.Background()
-	mockSubID := "11111111-1111-1111-1111-111111111111"
-	mockTenantID := mockSubID
-	location := "eastus"
 
 	type test struct {
-		name         string
 		openshiftdoc *api.OpenShiftClusterDocument
-		mocks        func(*test, *mock_database.MockBilling, *mock_billing.MockE2EManager)
+		name         string
+		mocks        func(*test, *mock_billing.MockManager)
 		wantError    error
 	}
 
 	for _, tt := range []*test{
 		{
-			name: "create a new billing entry",
-			openshiftdoc: &api.OpenShiftClusterDocument{
-				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
-				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
-				ID:                        mockSubID,
-				OpenShiftCluster: &api.OpenShiftCluster{
-					Properties: api.OpenShiftClusterProperties{
-						ServicePrincipalProfile: api.ServicePrincipalProfile{
-							TenantID: mockTenantID,
-						},
-					},
-					Location: location,
-				},
-			},
-			mocks: func(tt *test, billing *mock_database.MockBilling, e2e *mock_billing.MockE2EManager) {
-				billingDoc := &api.BillingDocument{
-					Key:                       tt.openshiftdoc.Key,
-					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
-					ID:                        mockSubID,
-					Billing: &api.Billing{
-						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
-						Location: tt.openshiftdoc.OpenShiftCluster.Location,
-					},
-				}
-
+			openshiftdoc: &api.OpenShiftClusterDocument{},
+			name:         "manager create is called and doesn't return an error when create doesn't return an error",
+			mocks: func(tt *test, billing *mock_billing.MockManager) {
 				billing.EXPECT().
-					Create(gomock.Any(), billingDoc).
-					Return(billingDoc, nil)
-
-				e2e.EXPECT().
-					CreateOrUpdateE2EBlob(gomock.Any(), gomock.Any(), gomock.Any(), billingDoc).
+					Create(gomock.Any(), tt.openshiftdoc).
 					Return(nil)
 			},
-		},
-		{
-			name: "error on create a new billing entry",
-			openshiftdoc: &api.OpenShiftClusterDocument{
-				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
-				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
-				ID:                        mockSubID,
-				OpenShiftCluster: &api.OpenShiftCluster{
-					Properties: api.OpenShiftClusterProperties{
-						ServicePrincipalProfile: api.ServicePrincipalProfile{
-							TenantID: mockTenantID,
-						},
-					},
-					Location: location,
-				},
-			},
-			mocks: func(tt *test, billing *mock_database.MockBilling, _ *mock_billing.MockE2EManager) {
-				billingDoc := &api.BillingDocument{
-					Key:                       tt.openshiftdoc.Key,
-					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
-					ID:                        mockSubID,
-					Billing: &api.Billing{
-						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
-						Location: tt.openshiftdoc.OpenShiftCluster.Location,
-					},
-				}
-
-				billing.EXPECT().
-					Create(gomock.Any(), billingDoc).
-					Return(nil, tt.wantError)
-			},
-			wantError: fmt.Errorf("Error creating document"),
-		},
-		{
-			name: "billing document already existing on DB on create",
-			openshiftdoc: &api.OpenShiftClusterDocument{
-				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
-				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
-				ID:                        mockSubID,
-				OpenShiftCluster: &api.OpenShiftCluster{
-					Properties: api.OpenShiftClusterProperties{
-						ServicePrincipalProfile: api.ServicePrincipalProfile{
-							TenantID: mockTenantID,
-						},
-					},
-					Location: location,
-				},
-			},
-			mocks: func(tt *test, billing *mock_database.MockBilling, _ *mock_billing.MockE2EManager) {
-				billingDoc := &api.BillingDocument{
-					Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
-					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
-					ID:                        mockSubID,
-					Billing: &api.Billing{
-						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
-						Location: tt.openshiftdoc.OpenShiftCluster.Location,
-					},
-				}
-
-				billing.EXPECT().
-					Create(gomock.Any(), billingDoc).
-					Return(nil, &cosmosdb.Error{
-						StatusCode: http.StatusConflict,
-					})
-			},
 			wantError: nil,
+		},
+		{
+			openshiftdoc: &api.OpenShiftClusterDocument{},
+			name:         "manager create is called and returns an error on create returning an error",
+			mocks: func(tt *test, billing *mock_billing.MockManager) {
+				billing.EXPECT().
+					Create(gomock.Any(), tt.openshiftdoc).
+					Return(tt.wantError)
+			},
+			wantError: fmt.Errorf("Error"),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
-			billing := mock_database.NewMockBilling(controller)
-			e2e := mock_billing.NewMockE2EManager(controller)
+			billing := mock_billing.NewMockManager(controller)
 			log := logrus.NewEntry(logrus.StandardLogger())
-			tt.mocks(tt, billing, e2e)
+			tt.mocks(tt, billing)
 			i := &Installer{
 				log:     log,
 				doc:     tt.openshiftdoc,
 				billing: billing,
-				e2e:     e2e,
 			}
 
 			err := i.createBillingRecord(ctx)

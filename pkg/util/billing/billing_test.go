@@ -4,9 +4,17 @@ package billing
 // Licensed under the Apache License 2.0.
 
 import (
+	"context"
+	"fmt"
+	"net/http"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/sirupsen/logrus"
+
 	"github.com/Azure/ARO-RP/pkg/api"
+	"github.com/Azure/ARO-RP/pkg/database/cosmosdb"
+	mock_database "github.com/Azure/ARO-RP/pkg/util/mocks/database"
 )
 
 func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
@@ -106,6 +114,314 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 				t.Errorf("result is :%t, want %t", result, tt.want)
 			}
 
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	ctx := context.Background()
+	mockSubID := "11111111-1111-1111-1111-111111111111"
+	mockTenantID := mockSubID
+	location := "eastus"
+
+	type test struct {
+		name         string
+		openshiftdoc *api.OpenShiftClusterDocument
+		mocks        func(*test, *mock_database.MockBilling, *mock_database.MockSubscriptions)
+		wantError    error
+	}
+
+	for _, tt := range []*test{
+		//Can't add tests for billing storage because there isn't an interface on the azure storage clients
+		{
+			name: "successful mark for deleteion on billing entity, with a subscription not registered for e2e",
+			openshiftdoc: &api.OpenShiftClusterDocument{
+				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
+				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
+				ID:                        mockSubID,
+				OpenShiftCluster: &api.OpenShiftCluster{
+					Properties: api.OpenShiftClusterProperties{
+						ServicePrincipalProfile: api.ServicePrincipalProfile{
+							TenantID: mockTenantID,
+						},
+					},
+					Location: location,
+				},
+			},
+			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
+				billingDoc := &api.BillingDocument{
+					Key:                       tt.openshiftdoc.Key,
+					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
+					ID:                        mockSubID,
+					Billing: &api.Billing{
+						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
+						Location: tt.openshiftdoc.OpenShiftCluster.Location,
+					},
+				}
+
+				billing.EXPECT().
+					MarkForDeletion(gomock.Any(), billingDoc.ID).
+					Return(billingDoc, nil)
+
+				subscription.EXPECT().
+					Get(gomock.Any(), mockSubID).
+					Return(&api.SubscriptionDocument{
+						Subscription: &api.Subscription{
+							Properties: &api.SubscriptionProperties{
+								RegisteredFeatures: []api.RegisteredFeatureProfile{
+									{
+										Name:  api.FeatureSaveAROTestConfig,
+										State: "NotRegistered",
+									},
+								},
+							},
+						},
+					}, nil)
+			},
+		},
+		{
+			name: "error on mark for deletion on billing entry that is not found",
+			openshiftdoc: &api.OpenShiftClusterDocument{
+				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
+				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
+				ID:                        mockSubID,
+				OpenShiftCluster: &api.OpenShiftCluster{
+					Properties: api.OpenShiftClusterProperties{
+						ServicePrincipalProfile: api.ServicePrincipalProfile{
+							TenantID: mockTenantID,
+						},
+					},
+					Location: location,
+				},
+			},
+			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
+				billing.EXPECT().
+					MarkForDeletion(gomock.Any(), tt.openshiftdoc.ID).
+					Return(nil, tt.wantError)
+			},
+			wantError: &cosmosdb.Error{
+				StatusCode: 404,
+				Message:    "Document not found",
+			},
+		},
+		{
+			name: "error on mark for deletion on billing entry that is not found",
+			openshiftdoc: &api.OpenShiftClusterDocument{
+				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
+				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
+				ID:                        mockSubID,
+				OpenShiftCluster: &api.OpenShiftCluster{
+					Properties: api.OpenShiftClusterProperties{
+						ServicePrincipalProfile: api.ServicePrincipalProfile{
+							TenantID: mockTenantID,
+						},
+					},
+					Location: location,
+				},
+			},
+			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
+
+				billingDoc := &api.BillingDocument{
+					Key:                       tt.openshiftdoc.Key,
+					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
+					ID:                        mockSubID,
+					Billing: &api.Billing{
+						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
+						Location: tt.openshiftdoc.OpenShiftCluster.Location,
+					},
+				}
+				billing.EXPECT().
+					MarkForDeletion(gomock.Any(), tt.openshiftdoc.ID).
+					Return(billingDoc, tt.wantError)
+
+				subscription.EXPECT().
+					Get(gomock.Any(), mockSubID).
+					Return(&api.SubscriptionDocument{
+						Subscription: &api.Subscription{
+							Properties: &api.SubscriptionProperties{
+								RegisteredFeatures: []api.RegisteredFeatureProfile{
+									{
+										Name:  api.FeatureSaveAROTestConfig,
+										State: "NotRegistered",
+									},
+								},
+							},
+						},
+					}, nil)
+			},
+			wantError: fmt.Errorf("Error in mark for deletion"),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			controller := gomock.NewController(t)
+			defer controller.Finish()
+			log := logrus.NewEntry(logrus.StandardLogger())
+			billingDB := mock_database.NewMockBilling(controller)
+			subsDB := mock_database.NewMockSubscriptions(controller)
+			tt.mocks(tt, billingDB, subsDB)
+			m := &manager{
+				log:       log,
+				billingDB: billingDB,
+				subDB:     subsDB,
+			}
+
+			err := m.Delete(ctx, tt.openshiftdoc.ID)
+			if err != nil {
+				if tt.wantError != err {
+					t.Errorf("Error want (%s), having (%s)", tt.wantError.Error(), err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	ctx := context.Background()
+	mockSubID := "11111111-1111-1111-1111-111111111111"
+	mockTenantID := mockSubID
+	location := "eastus"
+
+	type test struct {
+		name         string
+		openshiftdoc *api.OpenShiftClusterDocument
+		mocks        func(*test, *mock_database.MockBilling, *mock_database.MockSubscriptions)
+		wantError    error
+	}
+
+	for _, tt := range []*test{
+		//Can't add tests for billing storage because there isn't an interface on the azure storage clients
+		{
+			name: "create a new billing entry with a subscription not registered for e2e",
+			openshiftdoc: &api.OpenShiftClusterDocument{
+				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
+				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
+				ID:                        mockSubID,
+				OpenShiftCluster: &api.OpenShiftCluster{
+					Properties: api.OpenShiftClusterProperties{
+						ServicePrincipalProfile: api.ServicePrincipalProfile{
+							TenantID: mockTenantID,
+						},
+					},
+					Location: location,
+				},
+			},
+			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
+				billingDoc := &api.BillingDocument{
+					Key:                       tt.openshiftdoc.Key,
+					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
+					ID:                        mockSubID,
+					Billing: &api.Billing{
+						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
+						Location: tt.openshiftdoc.OpenShiftCluster.Location,
+					},
+				}
+
+				billing.EXPECT().
+					Create(gomock.Any(), billingDoc).
+					Return(billingDoc, nil)
+
+				subscription.EXPECT().
+					Get(gomock.Any(), mockSubID).
+					Return(&api.SubscriptionDocument{
+						Subscription: &api.Subscription{
+							Properties: &api.SubscriptionProperties{
+								RegisteredFeatures: []api.RegisteredFeatureProfile{
+									{
+										Name:  api.FeatureSaveAROTestConfig,
+										State: "NotRegistered",
+									},
+								},
+							},
+						},
+					}, nil)
+			},
+		},
+		{
+			name: "error on create a new billing entry",
+			openshiftdoc: &api.OpenShiftClusterDocument{
+				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
+				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
+				ID:                        mockSubID,
+				OpenShiftCluster: &api.OpenShiftCluster{
+					Properties: api.OpenShiftClusterProperties{
+						ServicePrincipalProfile: api.ServicePrincipalProfile{
+							TenantID: mockTenantID,
+						},
+					},
+					Location: location,
+				},
+			},
+			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
+				billingDoc := &api.BillingDocument{
+					Key:                       tt.openshiftdoc.Key,
+					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
+					ID:                        mockSubID,
+					Billing: &api.Billing{
+						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
+						Location: tt.openshiftdoc.OpenShiftCluster.Location,
+					},
+				}
+
+				billing.EXPECT().
+					Create(gomock.Any(), billingDoc).
+					Return(nil, tt.wantError)
+			},
+			wantError: fmt.Errorf("Error creating document"),
+		},
+		{
+			name: "billing document already existing on DB on create",
+			openshiftdoc: &api.OpenShiftClusterDocument{
+				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
+				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
+				ID:                        mockSubID,
+				OpenShiftCluster: &api.OpenShiftCluster{
+					Properties: api.OpenShiftClusterProperties{
+						ServicePrincipalProfile: api.ServicePrincipalProfile{
+							TenantID: mockTenantID,
+						},
+					},
+					Location: location,
+				},
+			},
+			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
+				billingDoc := &api.BillingDocument{
+					Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
+					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
+					ID:                        mockSubID,
+					Billing: &api.Billing{
+						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
+						Location: tt.openshiftdoc.OpenShiftCluster.Location,
+					},
+				}
+
+				billing.EXPECT().
+					Create(gomock.Any(), billingDoc).
+					Return(nil, &cosmosdb.Error{
+						StatusCode: http.StatusConflict,
+					})
+			},
+			wantError: nil,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			controller := gomock.NewController(t)
+			defer controller.Finish()
+			log := logrus.NewEntry(logrus.StandardLogger())
+			billingDB := mock_database.NewMockBilling(controller)
+			subsDB := mock_database.NewMockSubscriptions(controller)
+			tt.mocks(tt, billingDB, subsDB)
+			m := &manager{
+				log:       log,
+				billingDB: billingDB,
+				subDB:     subsDB,
+			}
+
+			err := m.Create(ctx, tt.openshiftdoc)
+			if err != nil {
+				if tt.wantError != err {
+					t.Errorf("Error want (%s), having (%s)", tt.wantError.Error(), err.Error())
+				}
+			}
 		})
 	}
 }

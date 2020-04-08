@@ -26,7 +26,7 @@ type Manager struct {
 	log          *logrus.Entry
 	env          env.Interface
 	db           database.OpenShiftClusters
-	billing      database.Billing
+	billing      billing.Manager
 	sub          database.Subscriptions
 	fpAuthorizer autorest.Authorizer
 
@@ -39,12 +39,11 @@ type Manager struct {
 	privateendpoint privateendpoint.Manager
 	subnet          subnet.Manager
 	acrtoken        acrtoken.Manager
-	e2e             billing.E2EManager
 
 	doc *api.OpenShiftClusterDocument
 }
 
-func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billing database.Billing, sub database.Subscriptions, doc *api.OpenShiftClusterDocument, e2e billing.E2EManager) (*Manager, error) {
+func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClusters, billingDB database.Billing, sub database.Subscriptions, doc *api.OpenShiftClusterDocument) (*Manager, error) {
 	r, err := azure.ParseResourceID(doc.OpenShiftCluster.ID)
 	if err != nil {
 		return nil, err
@@ -73,11 +72,16 @@ func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClus
 		}
 	}
 
+	billingManager, err := billing.NewManager(_env, billingDB, sub, log)
+	if err != nil {
+		return nil, err
+	}
+
 	m := &Manager{
 		log:          log,
 		env:          _env,
 		db:           db,
-		billing:      billing,
+		billing:      billingManager,
 		sub:          sub,
 		fpAuthorizer: fpAuthorizer,
 
@@ -90,7 +94,6 @@ func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClus
 		privateendpoint: privateendpoint.NewManager(_env, localFPAuthorizer),
 		acrtoken:        acrtoken,
 		subnet:          subnet.NewManager(r.SubscriptionID, fpAuthorizer),
-		e2e:             e2e,
 
 		doc: doc,
 	}

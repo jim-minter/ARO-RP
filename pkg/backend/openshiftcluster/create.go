@@ -295,7 +295,7 @@ func (m *Manager) Create(ctx context.Context) error {
 		return err
 	}
 
-	i, err := install.NewInstaller(ctx, m.log, m.env, m.db, m.billing, m.sub, m.doc, m.e2e)
+	i, err := install.NewInstaller(ctx, m.log, m.env, m.db, m.billing, m.sub, m.doc)
 	if err != nil {
 		return err
 	}

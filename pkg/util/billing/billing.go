@@ -8,13 +8,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
 	azstorage "github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/database"
+	"github.com/Azure/ARO-RP/pkg/database/cosmosdb"
 	"github.com/Azure/ARO-RP/pkg/env"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/storage"
 	"github.com/Azure/ARO-RP/pkg/util/feature"
@@ -25,38 +28,85 @@ const (
 	tenantIDAME  string = "33e01921-4d64-4f8c-a055-5bdaffd5e33d"
 )
 
-type E2EManager interface {
-	CreateOrUpdateE2EBlob(ctx context.Context, env env.Interface, sub database.Subscriptions, billingDoc *api.BillingDocument) error
+type Manager interface {
+	Create(context.Context, *api.OpenShiftClusterDocument) error
+	Delete(context.Context, string) error
 }
 
-type e2eManager struct {
+type manager struct {
 	storageClient *azstorage.Client
+	billingDB     database.Billing
+	subDB         database.Subscriptions
+	log           *logrus.Entry
 }
 
-func NewE2EManager(ctx context.Context, env env.Interface) (E2EManager, error) {
-	fpAuthorizer, err := env.FPAuthorizer(env.TenantID(), azure.PublicCloud.ResourceManagerEndpoint)
+func NewManager(_env env.Interface, billing database.Billing, sub database.Subscriptions, log *logrus.Entry) (Manager, error) {
+	fpAuthorizer, err := _env.FPAuthorizer(_env.TenantID(), azure.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	e2estorage := storage.NewAccountsClient(env.E2EStorageAccountSubID(), fpAuthorizer)
+	e2estorage := storage.NewAccountsClient(_env.E2EStorageAccountSubID(), fpAuthorizer)
 	if err != nil {
 		return nil, err
 	}
 
-	keys, err := e2estorage.ListKeys(ctx, "billing-global", env.E2EStorageAccountName(), "")
+	keys, err := e2estorage.ListKeys(context.Background(), "billing-global", _env.E2EStorageAccountName(), "")
 	if err != nil {
 		return nil, err
 	}
 	key := *(*keys.Keys)[0].Value
 
-	client, err := azstorage.NewBasicClient(env.E2EStorageAccountName(), key)
+	client, err := azstorage.NewBasicClient(_env.E2EStorageAccountName(), key)
 	if err != nil {
 		return nil, err
 	}
-	return &e2eManager{
+	return &manager{
 		storageClient: &client,
+		subDB:         sub,
+		billingDB:     billing,
+		log:           log,
 	}, nil
+}
+
+func (m *manager) Create(ctx context.Context, doc *api.OpenShiftClusterDocument) error {
+	billingDoc, err := m.billingDB.Create(ctx, &api.BillingDocument{
+		ID:                        doc.ID,
+		Key:                       doc.Key,
+		ClusterResourceGroupIDKey: doc.ClusterResourceGroupIDKey,
+		Billing: &api.Billing{
+			TenantID: doc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
+			Location: doc.OpenShiftCluster.Location,
+		},
+	})
+	if err != nil {
+		if err, ok := err.(*cosmosdb.Error); ok && err.StatusCode == http.StatusConflict {
+			m.log.Printf("billing record already present id DB")
+			return nil
+		}
+		return err
+	}
+
+	if e2eErr := m.createOrUpdateE2EBlob(ctx, billingDoc); e2eErr != nil {
+		m.log.Warnf("CreateOrUpdateE2EBlob failed : %s", e2eErr.Error())
+	}
+
+	return nil
+}
+
+func (m *manager) Delete(ctx context.Context, id string) error {
+	m.log.Printf("updating billing record with deletion time")
+	billingDoc, err := m.billingDB.MarkForDeletion(ctx, id)
+	if cosmosdb.IsErrorStatusCode(err, http.StatusNotFound) {
+		return nil
+	}
+
+	if e2eErr := m.createOrUpdateE2EBlob(ctx, billingDoc); e2eErr != nil {
+		// We are not failing the operation if we cannot write to e2e storage account, just warning
+		m.log.Warnf("CreateOrUpdateE2EBlob failed : %s", e2eErr.Error())
+	}
+
+	return nil
 }
 
 // IsSubscriptionRegisteredToE2E returns true if the subscription is having the
@@ -70,7 +120,22 @@ func IsSubscriptionRegisteredToE2E(sub *api.SubscriptionProperties) bool {
 
 // createOrUpdateE2Eblob create a copy of the billing document into the e2e storage account.
 // This is used later on for E2E Billing
-func (m *e2eManager) createOrUpdateE2Eblob(ctx context.Context, env env.Interface, doc api.BillingDocument, resource azure.Resource) error {
+func (m *manager) createOrUpdateE2EBlob(ctx context.Context, doc *api.BillingDocument) error {
+	// Validate if E2E Feature is registred
+	resource, err := azure.ParseResourceID(doc.Key)
+	if err != nil {
+		return err
+	}
+
+	subDocument, err := m.subDB.Get(ctx, resource.SubscriptionID)
+	if err != nil {
+		return err
+	}
+
+	if !IsSubscriptionRegisteredToE2E(subDocument.Subscription.Properties) {
+		return nil
+	}
+
 	blobclient := m.storageClient.GetBlobService()
 
 	containerName := strings.ToLower("bill-" + doc.Billing.Location + "-" + resource.ResourceGroup + "-" + resource.ResourceName)
@@ -79,7 +144,7 @@ func (m *e2eManager) createOrUpdateE2Eblob(ctx context.Context, env env.Interfac
 	}
 
 	containerRef := blobclient.GetContainerReference(containerName)
-	_, err := containerRef.CreateIfNotExists(nil)
+	_, err = containerRef.CreateIfNotExists(nil)
 	if err != nil {
 		return fmt.Errorf("Error creating container : %s", err.Error())
 	}
@@ -90,29 +155,4 @@ func (m *e2eManager) createOrUpdateE2Eblob(ctx context.Context, env env.Interfac
 		return err
 	}
 	return blobRef.CreateBlockBlobFromReader(bytes.NewReader(b), nil)
-}
-
-// CreateOrUpdateE2EBlob determines if the document belongs to an e2e subscription.
-// If so create a copy of the billing document into the e2e storage account.
-// This is used later on for E2E Billing
-func (m *e2eManager) CreateOrUpdateE2EBlob(ctx context.Context, env env.Interface, sub database.Subscriptions, billingDoc *api.BillingDocument) error {
-	// Validate if E2E Feature is registred
-	resource, err := azure.ParseResourceID(billingDoc.Key)
-	if err != nil {
-		return err
-	}
-
-	subDocument, err := sub.Get(ctx, resource.SubscriptionID)
-	if err != nil {
-		return err
-	}
-
-	if IsSubscriptionRegisteredToE2E(subDocument.Subscription.Properties) {
-		errBlob := m.createOrUpdateE2Eblob(ctx, env, *billingDoc, resource)
-		if errBlob != nil {
-			return errBlob
-		}
-	}
-
-	return nil
 }

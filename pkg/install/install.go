@@ -56,7 +56,7 @@ type Installer struct {
 	log          *logrus.Entry
 	env          env.Interface
 	db           database.OpenShiftClusters
-	billing      database.Billing
+	billing      billing.Manager
 	sub          database.Subscriptions
 	doc          *api.OpenShiftClusterDocument
 	cipher       encryption.Cipher
@@ -70,7 +70,6 @@ type Installer struct {
 	deployments       features.DeploymentsClient
 	groups            features.ResourceGroupsClient
 	accounts          storage.AccountsClient
-	e2e               billing.E2EManager
 
 	dns             dns.Manager
 	keyvault        keyvault.Manager
@@ -140,7 +139,6 @@ func NewInstaller(ctx context.Context, log *logrus.Entry, _env env.Interface, db
 		deployments:       features.NewDeploymentsClient(r.SubscriptionID, fpAuthorizer),
 		groups:            features.NewResourceGroupsClient(r.SubscriptionID, fpAuthorizer),
 		accounts:          storage.NewAccountsClient(r.SubscriptionID, fpAuthorizer),
-		e2e:               e2e,
 
 		dns:             dns.NewManager(_env, localFPAuthorizer),
 		keyvault:        keyvault.NewManager(localFPKVAuthorizer),

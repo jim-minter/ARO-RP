@@ -10,7 +10,6 @@ import (
 
 	"github.com/Azure/go-autorest/autorest"
 
-	"github.com/Azure/ARO-RP/pkg/database/cosmosdb"
 	"github.com/Azure/ARO-RP/pkg/env"
 	"github.com/Azure/ARO-RP/pkg/util/stringutils"
 	"github.com/Azure/ARO-RP/pkg/util/subnet"
@@ -107,15 +106,8 @@ func (m *Manager) Delete(ctx context.Context) error {
 		}
 	}
 
-	m.log.Printf("updating billing record with deletion time")
-	billingDoc, err := m.billing.MarkForDeletion(ctx, m.doc.ID)
-	if cosmosdb.IsErrorStatusCode(err, http.StatusNotFound) {
-		return nil
-	}
-
-	if e2eErr := m.e2e.CreateOrUpdateE2EBlob(ctx, m.env, m.sub, billingDoc); e2eErr != nil {
-		// We are not failing the operation if we cannot write to e2e storage account, just warning
-		m.log.Warnf("CreateOrUpdateE2EBlob failed : %s", e2eErr.Error())
+	if err = m.billing.Delete(ctx, m.doc.ID); err != nil {
+		return err
 	}
 
 	return err
