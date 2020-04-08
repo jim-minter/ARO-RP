@@ -5,11 +5,10 @@ package install
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/sirupsen/logrus"
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	mock_billing "github.com/Azure/ARO-RP/pkg/util/mocks/billing"
@@ -18,52 +17,45 @@ import (
 func TestCreateBillingEntry(t *testing.T) {
 	ctx := context.Background()
 
-	type test struct {
-		openshiftdoc *api.OpenShiftClusterDocument
-		name         string
-		mocks        func(*test, *mock_billing.MockManager)
-		wantError    error
-	}
-
-	for _, tt := range []*test{
+	for _, tt := range []struct {
+		name    string
+		mocks   func(*mock_billing.MockManager)
+		wantErr string
+	}{
 		{
-			openshiftdoc: &api.OpenShiftClusterDocument{},
-			name:         "manager create is called and doesn't return an error when create doesn't return an error",
-			mocks: func(tt *test, billing *mock_billing.MockManager) {
+			name: "manager create is called and doesn't return an error when create doesn't return an error",
+			mocks: func(billing *mock_billing.MockManager) {
 				billing.EXPECT().
-					Create(gomock.Any(), tt.openshiftdoc).
+					Create(gomock.Any(), &api.OpenShiftClusterDocument{}).
 					Return(nil)
 			},
-			wantError: nil,
 		},
 		{
-			openshiftdoc: &api.OpenShiftClusterDocument{},
-			name:         "manager create is called and returns an error on create returning an error",
-			mocks: func(tt *test, billing *mock_billing.MockManager) {
+			name: "manager create is called and returns an error on create returning an error",
+			mocks: func(billing *mock_billing.MockManager) {
 				billing.EXPECT().
-					Create(gomock.Any(), tt.openshiftdoc).
-					Return(tt.wantError)
+					Create(gomock.Any(), &api.OpenShiftClusterDocument{}).
+					Return(errors.New("random error"))
 			},
-			wantError: fmt.Errorf("Error"),
+			wantErr: "random error",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
+
 			billing := mock_billing.NewMockManager(controller)
-			log := logrus.NewEntry(logrus.StandardLogger())
-			tt.mocks(tt, billing)
+			tt.mocks(billing)
+
 			i := &Installer{
-				log:     log,
-				doc:     tt.openshiftdoc,
+				doc:     &api.OpenShiftClusterDocument{},
 				billing: billing,
 			}
 
 			err := i.createBillingRecord(ctx)
-			if err != nil {
-				if tt.wantError != err {
-					t.Errorf("Error want (%s), having (%s)", tt.wantError.Error(), err.Error())
-				}
+			if err != nil && err.Error() != tt.wantErr ||
+				err == nil && tt.wantErr != "" {
+				t.Error(err)
 			}
 		})
 	}

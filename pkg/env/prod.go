@@ -26,7 +26,6 @@ import (
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/dns"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/documentdb"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/keyvault"
-	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/storage"
 	"github.com/Azure/ARO-RP/pkg/util/clientauthorizer"
 	"github.com/Azure/ARO-RP/pkg/util/instancemetadata"
 	"github.com/Azure/ARO-RP/pkg/util/pem"
@@ -37,8 +36,7 @@ type prod struct {
 	armClientAuthorizer   clientauthorizer.ClientAuthorizer
 	adminClientAuthorizer clientauthorizer.ClientAuthorizer
 
-	keyvault   basekeyvault.BaseClient
-	e2estorage storage.AccountsClient
+	keyvault basekeyvault.BaseClient
 
 	acrName                  string
 	clustersKeyvaultURI      string

@@ -5,6 +5,7 @@ package billing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -17,21 +18,19 @@ import (
 	mock_database "github.com/Azure/ARO-RP/pkg/util/mocks/database"
 )
 
-func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
+func TestIsSubscriptionRegisteredForE2E(t *testing.T) {
 	mockSubID := "11111111-1111-1111-1111-111111111111"
 	for _, tt := range []struct {
 		name string
-		sub  *api.SubscriptionProperties
+		sub  api.SubscriptionProperties
 		want bool
 	}{
 		{
-			name: "empty sub",
-			sub:  &api.SubscriptionProperties{},
-			want: false,
+			name: "empty",
 		},
 		{
-			name: "sub wihout feature the flag registered and not internal tenant",
-			sub: &api.SubscriptionProperties{
+			name: "sub without feature flag registered and not internal tenant",
+			sub: api.SubscriptionProperties{
 				TenantID: mockSubID,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
@@ -40,24 +39,22 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 					},
 				},
 			},
-			want: false,
 		},
 		{
-			name: "sub with feature the flag registered and not internal tenant",
-			sub: &api.SubscriptionProperties{
+			name: "sub with feature flag registered and not internal tenant",
+			sub: api.SubscriptionProperties{
 				TenantID: mockSubID,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
-						Name:  api.FeatureSaveAROTestConfig,
+						Name:  featureSaveAROTestConfig,
 						State: "Registered",
 					},
 				},
 			},
-			want: false,
 		},
 		{
 			name: "AME internal tenant and feature flag not registered",
-			sub: &api.SubscriptionProperties{
+			sub: api.SubscriptionProperties{
 				TenantID: tenantIDAME,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
@@ -66,11 +63,10 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 					},
 				},
 			},
-			want: false,
 		},
 		{
 			name: "MSFT internal tenant and feature flag not registered",
-			sub: &api.SubscriptionProperties{
+			sub: api.SubscriptionProperties{
 				TenantID: tenantIDMSFT,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
@@ -79,15 +75,14 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 					},
 				},
 			},
-			want: false,
 		},
 		{
 			name: "AME internal tenant and feature flag registered",
-			sub: &api.SubscriptionProperties{
+			sub: api.SubscriptionProperties{
 				TenantID: tenantIDAME,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
-						Name:  api.FeatureSaveAROTestConfig,
+						Name:  featureSaveAROTestConfig,
 						State: "Registered",
 					},
 				},
@@ -96,11 +91,11 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 		},
 		{
 			name: "MSFT internal tenant and feature flag registered",
-			sub: &api.SubscriptionProperties{
+			sub: api.SubscriptionProperties{
 				TenantID: tenantIDMSFT,
 				RegisteredFeatures: []api.RegisteredFeatureProfile{
 					{
-						Name:  api.FeatureSaveAROTestConfig,
+						Name:  featureSaveAROTestConfig,
 						State: "Registered",
 					},
 				},
@@ -109,11 +104,10 @@ func TestIsSubscriptionRegisteredToE2E(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsSubscriptionRegisteredToE2E(tt.sub)
-			if result != tt.want {
-				t.Errorf("result is :%t, want %t", result, tt.want)
+			got := isSubscriptionRegisteredForE2E(&tt.sub)
+			if got != tt.want {
+				t.Error(got)
 			}
-
 		})
 	}
 }
@@ -128,13 +122,15 @@ func TestDelete(t *testing.T) {
 		name         string
 		openshiftdoc *api.OpenShiftClusterDocument
 		mocks        func(*test, *mock_database.MockBilling, *mock_database.MockSubscriptions)
-		wantError    error
+		wantErr      string
 	}
 
+	// Can't add tests for billing storage because there isn't an interface on
+	// the azure storage clients.
+
 	for _, tt := range []*test{
-		//Can't add tests for billing storage because there isn't an interface on the azure storage clients
 		{
-			name: "successful mark for deleteion on billing entity, with a subscription not registered for e2e",
+			name: "successful mark for deletion on billing entity, with a subscription not registered for e2e",
 			openshiftdoc: &api.OpenShiftClusterDocument{
 				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
 				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
@@ -154,8 +150,8 @@ func TestDelete(t *testing.T) {
 					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
 					ID:                        mockSubID,
 					Billing: &api.Billing{
-						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
-						Location: tt.openshiftdoc.OpenShiftCluster.Location,
+						TenantID: mockTenantID,
+						Location: location,
 					},
 				}
 
@@ -170,7 +166,7 @@ func TestDelete(t *testing.T) {
 							Properties: &api.SubscriptionProperties{
 								RegisteredFeatures: []api.RegisteredFeatureProfile{
 									{
-										Name:  api.FeatureSaveAROTestConfig,
+										Name:  featureSaveAROTestConfig,
 										State: "NotRegistered",
 									},
 								},
@@ -180,7 +176,7 @@ func TestDelete(t *testing.T) {
 			},
 		},
 		{
-			name: "error on mark for deletion on billing entry that is not found",
+			name: "no error on mark for deletion on billing entry that is not found",
 			openshiftdoc: &api.OpenShiftClusterDocument{
 				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
 				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
@@ -197,15 +193,13 @@ func TestDelete(t *testing.T) {
 			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
 				billing.EXPECT().
 					MarkForDeletion(gomock.Any(), tt.openshiftdoc.ID).
-					Return(nil, tt.wantError)
-			},
-			wantError: &cosmosdb.Error{
-				StatusCode: 404,
-				Message:    "Document not found",
+					Return(nil, &cosmosdb.Error{
+						StatusCode: 404,
+					})
 			},
 		},
 		{
-			name: "error on mark for deletion on billing entry that is not found",
+			name: "error on mark for deletion on billing entry",
 			openshiftdoc: &api.OpenShiftClusterDocument{
 				Key:                       fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName/providers/microsoft.redhatopenshift/openshiftclusters/clusterName", mockSubID),
 				ClusterResourceGroupIDKey: fmt.Sprintf("/subscriptions/%s/resourcegroups/rgName", mockSubID),
@@ -220,7 +214,6 @@ func TestDelete(t *testing.T) {
 				},
 			},
 			mocks: func(tt *test, billing *mock_database.MockBilling, subscription *mock_database.MockSubscriptions) {
-
 				billingDoc := &api.BillingDocument{
 					Key:                       tt.openshiftdoc.Key,
 					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
@@ -230,46 +223,35 @@ func TestDelete(t *testing.T) {
 						Location: tt.openshiftdoc.OpenShiftCluster.Location,
 					},
 				}
+
 				billing.EXPECT().
 					MarkForDeletion(gomock.Any(), tt.openshiftdoc.ID).
-					Return(billingDoc, tt.wantError)
-
-				subscription.EXPECT().
-					Get(gomock.Any(), mockSubID).
-					Return(&api.SubscriptionDocument{
-						Subscription: &api.Subscription{
-							Properties: &api.SubscriptionProperties{
-								RegisteredFeatures: []api.RegisteredFeatureProfile{
-									{
-										Name:  api.FeatureSaveAROTestConfig,
-										State: "NotRegistered",
-									},
-								},
-							},
-						},
-					}, nil)
+					Return(billingDoc, errors.New("random error"))
 			},
-			wantError: fmt.Errorf("Error in mark for deletion"),
+			wantErr: "random error",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
+
 			log := logrus.NewEntry(logrus.StandardLogger())
+
 			billingDB := mock_database.NewMockBilling(controller)
 			subsDB := mock_database.NewMockSubscriptions(controller)
+
 			tt.mocks(tt, billingDB, subsDB)
+
 			m := &manager{
 				log:       log,
 				billingDB: billingDB,
 				subDB:     subsDB,
 			}
 
-			err := m.Delete(ctx, tt.openshiftdoc.ID)
-			if err != nil {
-				if tt.wantError != err {
-					t.Errorf("Error want (%s), having (%s)", tt.wantError.Error(), err.Error())
-				}
+			err := m.Delete(ctx, tt.openshiftdoc)
+			if err != nil && err.Error() != tt.wantErr ||
+				err == nil && tt.wantErr != "" {
+				t.Error(err)
 			}
 		})
 	}
@@ -285,11 +267,13 @@ func TestCreate(t *testing.T) {
 		name         string
 		openshiftdoc *api.OpenShiftClusterDocument
 		mocks        func(*test, *mock_database.MockBilling, *mock_database.MockSubscriptions)
-		wantError    error
+		wantErr      string
 	}
 
+	// Can't add tests for billing storage because there isn't an interface on
+	// the azure storage clients.
+
 	for _, tt := range []*test{
-		//Can't add tests for billing storage because there isn't an interface on the azure storage clients
 		{
 			name: "create a new billing entry with a subscription not registered for e2e",
 			openshiftdoc: &api.OpenShiftClusterDocument{
@@ -311,8 +295,8 @@ func TestCreate(t *testing.T) {
 					ClusterResourceGroupIDKey: tt.openshiftdoc.ClusterResourceGroupIDKey,
 					ID:                        mockSubID,
 					Billing: &api.Billing{
-						TenantID: tt.openshiftdoc.OpenShiftCluster.Properties.ServicePrincipalProfile.TenantID,
-						Location: tt.openshiftdoc.OpenShiftCluster.Location,
+						TenantID: mockTenantID,
+						Location: location,
 					},
 				}
 
@@ -327,7 +311,7 @@ func TestCreate(t *testing.T) {
 							Properties: &api.SubscriptionProperties{
 								RegisteredFeatures: []api.RegisteredFeatureProfile{
 									{
-										Name:  api.FeatureSaveAROTestConfig,
+										Name:  featureSaveAROTestConfig,
 										State: "NotRegistered",
 									},
 								},
@@ -364,9 +348,9 @@ func TestCreate(t *testing.T) {
 
 				billing.EXPECT().
 					Create(gomock.Any(), billingDoc).
-					Return(nil, tt.wantError)
+					Return(nil, errors.New("random error"))
 			},
-			wantError: fmt.Errorf("Error creating document"),
+			wantErr: "random error",
 		},
 		{
 			name: "billing document already existing on DB on create",
@@ -400,16 +384,19 @@ func TestCreate(t *testing.T) {
 						StatusCode: http.StatusConflict,
 					})
 			},
-			wantError: nil,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			controller := gomock.NewController(t)
 			defer controller.Finish()
+
 			log := logrus.NewEntry(logrus.StandardLogger())
+
 			billingDB := mock_database.NewMockBilling(controller)
 			subsDB := mock_database.NewMockSubscriptions(controller)
+
 			tt.mocks(tt, billingDB, subsDB)
+
 			m := &manager{
 				log:       log,
 				billingDB: billingDB,
@@ -417,10 +404,9 @@ func TestCreate(t *testing.T) {
 			}
 
 			err := m.Create(ctx, tt.openshiftdoc)
-			if err != nil {
-				if tt.wantError != err {
-					t.Errorf("Error want (%s), having (%s)", tt.wantError.Error(), err.Error())
-				}
+			if err != nil && err.Error() != tt.wantErr ||
+				err == nil && tt.wantErr != "" {
+				t.Error(err)
 			}
 		})
 	}

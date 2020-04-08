@@ -27,7 +27,6 @@ type Manager struct {
 	env          env.Interface
 	db           database.OpenShiftClusters
 	billing      billing.Manager
-	sub          database.Subscriptions
 	fpAuthorizer autorest.Authorizer
 
 	ocDynamicValidator validate.OpenShiftClusterDynamicValidator
@@ -82,7 +81,6 @@ func NewManager(log *logrus.Entry, _env env.Interface, db database.OpenShiftClus
 		env:          _env,
 		db:           db,
 		billing:      billingManager,
-		sub:          sub,
 		fpAuthorizer: fpAuthorizer,
 
 		ocDynamicValidator: validate.NewOpenShiftClusterDynamicValidator(_env),

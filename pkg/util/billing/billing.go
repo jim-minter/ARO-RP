@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -24,13 +23,18 @@ import (
 )
 
 const (
-	tenantIDMSFT string = "72f988bf-86f1-41af-91ab-2d7cd011db47"
-	tenantIDAME  string = "33e01921-4d64-4f8c-a055-5bdaffd5e33d"
+	tenantIDMSFT = "72f988bf-86f1-41af-91ab-2d7cd011db47"
+	tenantIDAME  = "33e01921-4d64-4f8c-a055-5bdaffd5e33d"
+
+	// featureSaveAROTestConfig is the feature in the subscription that is used
+	// to indicate if we need to save ARO cluster config into the E2E
+	// StorageAccount
+	featureSaveAROTestConfig = "Microsoft.RedHatOpenShift/SaveAROTestConfig"
 )
 
 type Manager interface {
 	Create(context.Context, *api.OpenShiftClusterDocument) error
-	Delete(context.Context, string) error
+	Delete(context.Context, *api.OpenShiftClusterDocument) error
 }
 
 type manager struct {
@@ -40,27 +44,28 @@ type manager struct {
 	log           *logrus.Entry
 }
 
-func NewManager(_env env.Interface, billing database.Billing, sub database.Subscriptions, log *logrus.Entry) (Manager, error) {
-	fpAuthorizer, err := _env.FPAuthorizer(_env.TenantID(), azure.PublicCloud.ResourceManagerEndpoint)
+func NewManager(env env.Interface, billing database.Billing, sub database.Subscriptions, log *logrus.Entry) (Manager, error) {
+	localFPAuthorizer, err := env.FPAuthorizer(env.TenantID(), azure.PublicCloud.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	e2estorage := storage.NewAccountsClient(_env.E2EStorageAccountSubID(), fpAuthorizer)
+	e2estorage := storage.NewAccountsClient(env.E2EStorageAccountSubID(), localFPAuthorizer)
 	if err != nil {
 		return nil, err
 	}
 
-	keys, err := e2estorage.ListKeys(context.Background(), "billing-global", _env.E2EStorageAccountName(), "")
+	keys, err := e2estorage.ListKeys(context.Background(), "billing-global", env.E2EStorageAccountName(), "")
 	if err != nil {
 		return nil, err
 	}
 	key := *(*keys.Keys)[0].Value
 
-	client, err := azstorage.NewBasicClient(_env.E2EStorageAccountName(), key)
+	client, err := azstorage.NewBasicClient(env.E2EStorageAccountName(), key)
 	if err != nil {
 		return nil, err
 	}
+
 	return &manager{
 		storageClient: &client,
 		subDB:         sub,
@@ -79,49 +84,53 @@ func (m *manager) Create(ctx context.Context, doc *api.OpenShiftClusterDocument)
 			Location: doc.OpenShiftCluster.Location,
 		},
 	})
+	if err, ok := err.(*cosmosdb.Error); ok &&
+		err.StatusCode == http.StatusConflict {
+		m.log.Print("billing record already present in DB")
+		return nil
+	}
 	if err != nil {
-		if err, ok := err.(*cosmosdb.Error); ok && err.StatusCode == http.StatusConflict {
-			m.log.Printf("billing record already present id DB")
-			return nil
-		}
 		return err
 	}
 
 	if e2eErr := m.createOrUpdateE2EBlob(ctx, billingDoc); e2eErr != nil {
-		m.log.Warnf("CreateOrUpdateE2EBlob failed : %s", e2eErr.Error())
+		m.log.Warnf("createOrUpdateE2EBlob failed: %s", e2eErr)
 	}
 
 	return nil
 }
 
-func (m *manager) Delete(ctx context.Context, id string) error {
+func (m *manager) Delete(ctx context.Context, doc *api.OpenShiftClusterDocument) error {
 	m.log.Printf("updating billing record with deletion time")
-	billingDoc, err := m.billingDB.MarkForDeletion(ctx, id)
+	billingDoc, err := m.billingDB.MarkForDeletion(ctx, doc.ID)
 	if cosmosdb.IsErrorStatusCode(err, http.StatusNotFound) {
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 
 	if e2eErr := m.createOrUpdateE2EBlob(ctx, billingDoc); e2eErr != nil {
 		// We are not failing the operation if we cannot write to e2e storage account, just warning
-		m.log.Warnf("CreateOrUpdateE2EBlob failed : %s", e2eErr.Error())
+		m.log.Warnf("createOrUpdateE2EBlob failed: %s", e2eErr)
 	}
 
 	return nil
 }
 
-// IsSubscriptionRegisteredToE2E returns true if the subscription is having the
-// "Microsoft.ContainerService/SaveAROTestConfig" feature registered
-func IsSubscriptionRegisteredToE2E(sub *api.SubscriptionProperties) bool {
+// isSubscriptionRegisteredForE2E returns true if the subscription has the
+// "Microsoft.RedHatOpenShift/SaveAROTestConfig" feature registered
+func isSubscriptionRegisteredForE2E(sub *api.SubscriptionProperties) bool {
 	if sub.TenantID == tenantIDMSFT || sub.TenantID == tenantIDAME {
-		return feature.IsRegisteredForFeature(sub, api.FeatureSaveAROTestConfig)
+		return feature.IsRegisteredForFeature(sub, featureSaveAROTestConfig)
 	}
 	return false
 }
 
-// createOrUpdateE2Eblob create a copy of the billing document into the e2e storage account.
-// This is used later on for E2E Billing
+// createOrUpdateE2Eblob create a copy of the billing document in the e2e
+// storage account. This is used later on by the billing e2e
 func (m *manager) createOrUpdateE2EBlob(ctx context.Context, doc *api.BillingDocument) error {
-	// Validate if E2E Feature is registred
+	// Validate if E2E Feature is registered
 	resource, err := azure.ParseResourceID(doc.Key)
 	if err != nil {
 		return err
@@ -132,7 +141,7 @@ func (m *manager) createOrUpdateE2EBlob(ctx context.Context, doc *api.BillingDoc
 		return err
 	}
 
-	if !IsSubscriptionRegisteredToE2E(subDocument.Subscription.Properties) {
+	if !isSubscriptionRegisteredForE2E(subDocument.Subscription.Properties) {
 		return nil
 	}
 
@@ -140,13 +149,13 @@ func (m *manager) createOrUpdateE2EBlob(ctx context.Context, doc *api.BillingDoc
 
 	containerName := strings.ToLower("bill-" + doc.Billing.Location + "-" + resource.ResourceGroup + "-" + resource.ResourceName)
 	if len(containerName) > 63 {
-		containerName = containerName[:62] // maximum characters allowed is 63
+		containerName = containerName[:63]
 	}
 
 	containerRef := blobclient.GetContainerReference(containerName)
 	_, err = containerRef.CreateIfNotExists(nil)
 	if err != nil {
-		return fmt.Errorf("Error creating container : %s", err.Error())
+		return err
 	}
 
 	blobRef := containerRef.GetBlobReference("billingentity")
@@ -154,5 +163,6 @@ func (m *manager) createOrUpdateE2EBlob(ctx context.Context, doc *api.BillingDoc
 	if err != nil {
 		return err
 	}
+
 	return blobRef.CreateBlockBlobFromReader(bytes.NewReader(b), nil)
 }

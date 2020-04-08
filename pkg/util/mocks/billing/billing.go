@@ -51,7 +51,7 @@ func (mr *MockManagerMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
 }
 
 // Delete mocks base method
-func (m *MockManager) Delete(arg0 context.Context, arg1 string) error {
+func (m *MockManager) Delete(arg0 context.Context, arg1 *api.OpenShiftClusterDocument) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
 	ret0, _ := ret[0].(error)

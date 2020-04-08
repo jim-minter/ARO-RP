@@ -91,7 +91,6 @@ func (m *Manager) Delete(ctx context.Context) error {
 		(detailedErr.StatusCode == http.StatusForbidden || detailedErr.StatusCode == http.StatusNotFound) {
 		err = nil
 	}
-
 	if err != nil {
 		return err
 	}
@@ -106,9 +105,5 @@ func (m *Manager) Delete(ctx context.Context) error {
 		}
 	}
 
-	if err = m.billing.Delete(ctx, m.doc.ID); err != nil {
-		return err
-	}
-
-	return err
+	return m.billing.Delete(ctx, m.doc)
 }
