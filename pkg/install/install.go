@@ -193,7 +193,6 @@ func (i *Installer) Install(ctx context.Context, installConfig *installconfig.In
 			action(i.createCertificates),
 			action(i.initializeKubernetesClients),
 			condition{i.bootstrapConfigMapReady, 30 * time.Minute},
-			action(i.ensureGenevaLogging),
 			action(i.ensureIfReload),
 			action(i.ensureRouteFix),
 			action(i.ensureAroOperator),
