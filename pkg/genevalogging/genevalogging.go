@@ -32,7 +32,6 @@ import (
 
 type GenevaLogging interface {
 	CreateOrUpdate(ctx context.Context) error
-	ApplySecret(s *v1.Secret) error
 }
 
 type genevaLogging struct {
@@ -46,28 +45,13 @@ type genevaLogging struct {
 	monitoringGCSRegion      string
 	monitoringGCSEnvironment string
 
+	certs *v1.Secret
+
 	cli    kubernetes.Interface
 	seccli securityclient.Interface
 }
 
-func NewForRP(log *logrus.Entry, e env.Interface, oc *api.OpenShiftCluster, cli kubernetes.Interface, seccli securityclient.Interface) GenevaLogging {
-	return &genevaLogging{
-		log: log,
-
-		resourceID:               oc.ID,
-		acrName:                  e.ACRName(),
-		namespace:                KubeNamespace,
-		configVersion:            e.ClustersGenevaLoggingConfigVersion(),
-		monitoringGCSEnvironment: e.ClustersGenevaLoggingEnvironment(),
-		monitoringGCSRegion:      e.Location(),
-		monitoringTenant:         e.Location(),
-
-		cli:    cli,
-		seccli: seccli,
-	}
-}
-
-func NewForOperator(log *logrus.Entry, cs *aro.ClusterSpec, cli kubernetes.Interface, seccli securityclient.Interface) GenevaLogging {
+func NewForOperator(log *logrus.Entry, cs *aro.ClusterSpec, cli kubernetes.Interface, seccli securityclient.Interface, certs *v1.Secret) GenevaLogging {
 	return &genevaLogging{
 		log: log,
 
@@ -79,17 +63,11 @@ func NewForOperator(log *logrus.Entry, cs *aro.ClusterSpec, cli kubernetes.Inter
 		monitoringGCSRegion:      cs.GenevaLogging.MonitoringGCSRegion,
 		monitoringTenant:         cs.GenevaLogging.MonitoringTenant,
 
+		certs: certs,
+
 		cli:    cli,
 		seccli: seccli,
 	}
-}
-
-func (g *genevaLogging) fluentbitImage() string {
-	return fmt.Sprintf(fluentbitImageFormat, g.acrName)
-}
-
-func (g *genevaLogging) mdsdImage() string {
-	return fmt.Sprintf(mdsdImageFormat, g.acrName)
 }
 
 func (g *genevaLogging) ensureNamespace(ns string) error {
@@ -142,7 +120,7 @@ func (g *genevaLogging) applyConfigMap(cm *v1.ConfigMap) error {
 	})
 }
 
-func (g *genevaLogging) ApplySecret(s *v1.Secret) error {
+func (g *genevaLogging) applySecret(s *v1.Secret) error {
 	_, err := g.cli.CoreV1().Secrets(s.Namespace).Create(s)
 	if !errors.IsAlreadyExists(err) {
 		return err
@@ -203,6 +181,11 @@ func (g *genevaLogging) CreateOrUpdate(ctx context.Context) error {
 	}
 
 	err = g.ensureNamespace(g.namespace)
+	if err != nil {
+		return err
+	}
+
+	err = g.applySecret(g.certs)
 	if err != nil {
 		return err
 	}
