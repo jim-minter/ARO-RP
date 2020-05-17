@@ -22,6 +22,7 @@ func usage() {
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s mirror\n", os.Args[0])
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s monitor\n", os.Args[0])
 	fmt.Fprintf(flag.CommandLine.Output(), "  %s rp\n", os.Args[0])
+	fmt.Fprintf(flag.CommandLine.Output(), "  %s operator\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -50,6 +51,9 @@ func main() {
 	case "deploy":
 		checkArgs(3)
 		err = deploy(ctx, log)
+	case "operator":
+		checkArgs(1)
+		err = operator(ctx, log)
 	default:
 		usage()
 		os.Exit(2)

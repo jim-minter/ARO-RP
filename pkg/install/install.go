@@ -38,6 +38,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/database"
 	"github.com/Azure/ARO-RP/pkg/env"
 	"github.com/Azure/ARO-RP/pkg/util/arm"
+	aroclient "github.com/Azure/ARO-RP/pkg/util/aro-operator-client/clientset/versioned/typed/aro.openshift.io/v1alpha1"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/compute"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/features"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/network"
@@ -85,6 +86,7 @@ type Installer struct {
 	configcli     configclient.Interface
 	samplescli    samplesclient.Interface
 	securitycli   securityclient.Interface
+	arocli        aroclient.AroV1alpha1Interface
 }
 
 const (
@@ -159,10 +161,9 @@ func (i *Installer) AdminUpgrade(ctx context.Context) error {
 		action(i.ensureBillingRecord), // belt and braces
 		action(i.fixLBProbes),
 		action(i.fixNSG),
-		action(i.fixPullSecret),
-		action(i.ensureGenevaLogging),
 		action(i.ensureIfReload),
 		action(i.ensureRouteFix),
+		action(i.ensureAroOperator),
 		action(i.upgradeCertificates),
 		action(i.configureAPIServerCertificate),
 		action(i.configureIngressCertificate),
@@ -192,6 +193,7 @@ func (i *Installer) Install(ctx context.Context, installConfig *installconfig.In
 			action(i.ensureGenevaLogging),
 			action(i.ensureIfReload),
 			action(i.ensureRouteFix),
+			action(i.ensureAroOperator),
 			action(i.incrInstallPhase),
 		},
 		api.InstallPhaseRemoveBootstrap: {
@@ -439,6 +441,11 @@ func (i *Installer) initializeKubernetesClients(ctx context.Context) error {
 	}
 
 	i.samplescli, err = samplesclient.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+
+	i.arocli, err = aroclient.NewForConfig(restConfig)
 	if err != nil {
 		return err
 	}
