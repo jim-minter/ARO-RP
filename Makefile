@@ -1,6 +1,7 @@
 SHELL = /bin/bash
 COMMIT = $(shell git rev-parse --short HEAD)$(shell [[ $$(git status --porcelain) = "" ]] || echo -dirty)
-ARO_IMAGE ?= ${RP_IMAGE_ACR}.azurecr.io/aro:$(COMMIT)
+ARO_IMAGE_TAG ?= $(COMMIT)
+ARO_IMAGE ?= ${RP_IMAGE_ACR}.azurecr.io/aro:$(ARO_IMAGE_TAG)
 
 aro: generate
 	go build -ldflags "-X github.com/Azure/ARO-RP/pkg/util/version.GitCommit=$(COMMIT)" ./cmd/aro
@@ -71,6 +72,9 @@ image-proxy: proxy
 image-routefix:
 	docker pull registry.access.redhat.com/ubi8/ubi
 	docker build -f Dockerfile.routefix -t ${RP_IMAGE_ACR}.azurecr.io/routefix:$(COMMIT) .
+
+get-aro-image:
+	@echo $(ARO_IMAGE)
 
 publish-image-aro: image-aro
 	docker push $(ARO_IMAGE)
