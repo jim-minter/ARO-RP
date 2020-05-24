@@ -18,6 +18,7 @@ gomock_reflect_*
 /python/az/aro/build
 /python/az/aro/dist
 /secrets*
+/sshtool
 /mdm_statsd.socket
 /uts.txt
 /cover.out

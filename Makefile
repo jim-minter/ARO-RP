@@ -82,6 +82,11 @@ secrets-update:
 	az storage blob upload -n secrets.tar.gz -c secrets -f secrets.tar.gz --account-name ${SECRET_SA_ACCOUNT_NAME} >/dev/null
 	rm secrets.tar.gz
 
+sshtool:
+	go build ./hack/sshtool
+	docker build --format docker -t docker.io/jimminter/sshtool:latest -f Dockerfile.sshtool .
+	docker push docker.io/jimminter/sshtool:latest
+
 e2e.test:
 	go test ./test/e2e -tags e2e -c -o e2e.test
 
@@ -119,4 +124,4 @@ vendor:
 	go mod tidy
 	go mod vendor
 
-.PHONY: admin.kubeconfig aro az clean client generate image-aro image-fluentbit image-proxy image-routefix proxy publish-image-aro publish-image-fluentbit publish-image-proxy publish-image-routefix secrets secrets-update e2e.test test-e2e test-go test-python vendor
+.PHONY: admin.kubeconfig aro az clean client generate image-aro image-fluentbit image-proxy image-routefix proxy publish-image-aro publish-image-fluentbit publish-image-proxy publish-image-routefix secrets secrets-update sshtool e2e.test test-e2e test-go test-python vendor
