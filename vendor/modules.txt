@@ -203,6 +203,9 @@ github.com/coreos/ignition/config/v2_2/types
 github.com/coreos/ignition/config/v2_4/types
 github.com/coreos/ignition/config/v2_5_experimental/types
 github.com/coreos/ignition/config/validate/report
+# github.com/creack/pty v1.1.7
+## explicit
+github.com/creack/pty
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dimchansky/utfbom v1.1.0
@@ -773,6 +776,7 @@ golang.org/x/crypto/pkcs12/internal/rc2
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
+golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/mod v0.3.0
