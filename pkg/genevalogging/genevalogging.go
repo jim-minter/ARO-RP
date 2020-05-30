@@ -25,7 +25,7 @@ import (
 )
 
 type GenevaLogging interface {
-	CreateOrUpdate(ctx context.Context) error
+	Resources(ctx context.Context) ([]runtime.Object, error)
 }
 
 type genevaLogging struct {
@@ -39,13 +39,11 @@ type genevaLogging struct {
 	monitoringGCSRegion      string
 	monitoringGCSEnvironment string
 
-	certs *v1.Secret
-
-	dh     dynamichelper.DynamicHelper
+	certs  *v1.Secret
 	seccli securityclient.Interface
 }
 
-func New(log *logrus.Entry, cs *aro.ClusterSpec, dh dynamichelper.DynamicHelper, seccli securityclient.Interface, certs *v1.Secret) GenevaLogging {
+func New(log *logrus.Entry, cs *aro.ClusterSpec, seccli securityclient.Interface, certs *v1.Secret) GenevaLogging {
 	certs.TypeMeta = metav1.TypeMeta{
 		Kind:       "Secret",
 		APIVersion: "v1",
@@ -63,7 +61,6 @@ func New(log *logrus.Entry, cs *aro.ClusterSpec, dh dynamichelper.DynamicHelper,
 
 		certs: certs,
 
-		dh:     dh,
 		seccli: seccli,
 	}
 }
@@ -382,7 +379,7 @@ func (g *genevaLogging) daemonset(r azure.Resource) *appsv1.DaemonSet {
 	}
 }
 
-func (g *genevaLogging) resources(ctx context.Context) ([]runtime.Object, error) {
+func (g *genevaLogging) Resources(ctx context.Context) ([]runtime.Object, error) {
 	results := []runtime.Object{}
 	r, err := azure.ParseResourceID(g.resourceID)
 	if err != nil {
@@ -442,22 +439,4 @@ func (g *genevaLogging) resources(ctx context.Context) ([]runtime.Object, error)
 	}
 
 	return results, nil
-}
-
-func (g *genevaLogging) CreateOrUpdate(ctx context.Context) error {
-	resources, err := g.resources(ctx)
-	if err != nil {
-		return err
-	}
-	for _, res := range resources {
-		un, err := g.dh.ToUnstructured(res)
-		if err != nil {
-			return err
-		}
-		err = g.dh.CreateOrUpdate(ctx, un)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
