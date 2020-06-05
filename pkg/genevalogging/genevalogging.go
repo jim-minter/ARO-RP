@@ -161,7 +161,7 @@ func (g *genevaLogging) daemonset(r azure.Resource) *appsv1.DaemonSet {
 					Containers: []v1.Container{
 						{
 							Name:  "fluentbit-journal",
-							Image: version.FluentbitImage(g.env.ACRName()),
+							Image: version.FluentbitImage(g.acrName),
 							Command: []string{
 								"/opt/td-agent-bit/bin/td-agent-bit",
 							},
@@ -198,7 +198,7 @@ func (g *genevaLogging) daemonset(r azure.Resource) *appsv1.DaemonSet {
 						},
 						{
 							Name:  "fluentbit-containers",
-							Image: version.FluentbitImage(g.env.ACRName()),
+							Image: version.FluentbitImage(g.acrName),
 							Command: []string{
 								"/opt/td-agent-bit/bin/td-agent-bit",
 							},
@@ -235,7 +235,7 @@ func (g *genevaLogging) daemonset(r azure.Resource) *appsv1.DaemonSet {
 						},
 						{
 							Name:  "fluentbit-audit",
-							Image: version.FluentbitImage(g.env.ACRName()),
+							Image: version.FluentbitImage(g.acrName),
 							Command: []string{
 								"/opt/td-agent-bit/bin/td-agent-bit",
 							},
@@ -272,7 +272,7 @@ func (g *genevaLogging) daemonset(r azure.Resource) *appsv1.DaemonSet {
 						},
 						{
 							Name:  "mdsd",
-							Image: version.MdsdImage(g.env.ACRName()),
+							Image: version.MdsdImage(g.acrName),
 							Command: []string{
 								"/usr/sbin/mdsd",
 							},
