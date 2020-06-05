@@ -10,7 +10,8 @@ const (
 	fluentbitImageFormat = "%s.azurecr.io/fluentbit:1.3.9-1"
 	mdsdImageFormat      = "%s.azurecr.io/genevamdsd:master_285"
 
-	parsersConf = `
+	genevaClusterLogsNamespace = "AROClusterLogs"
+	parsersConf                = `
 [PARSER]
 	Name audit
 	Format json
