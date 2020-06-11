@@ -15,10 +15,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	aroclient "github.com/Azure/ARO-RP/pkg/util/aro-operator-client/clientset/versioned/typed/aro.openshift.io/v1alpha1"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/compute"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/features"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/insights"
-	aroclient "github.com/Azure/ARO-RP/pkg/util/aro-operator-client/clientset/versioned/typed/aro.openshift.io/v1alpha1"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/redhatopenshift"
 )
 
@@ -29,9 +29,9 @@ type clientSet struct {
 	Resources         features.ResourcesClient
 	ActivityLogs      insights.ActivityLogsClient
 
-	Kubernetes        kubernetes.Interface
-	MachineAPI        machineapiclient.Interface
-	AROClusters       aroclient.AroV1alpha1Interface
+	Kubernetes  kubernetes.Interface
+	MachineAPI  machineapiclient.Interface
+	AROClusters aroclient.AroV1alpha1Interface
 }
 
 var (
@@ -90,9 +90,9 @@ func newClientSet(subscriptionID string) (*clientSet, error) {
 		Resources:         features.NewResourcesClient(subscriptionID, authorizer),
 		ActivityLogs:      insights.NewActivityLogsClient(subscriptionID, authorizer),
 
-		Kubernetes:        cli,
-		MachineAPI:        machineapicli,
-		AROClusters:       arocli,
+		Kubernetes:  cli,
+		MachineAPI:  machineapicli,
+		AROClusters: arocli,
 	}, nil
 }
 
