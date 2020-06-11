@@ -4,7 +4,7 @@ package version
 // Licensed under the Apache License 2.0.
 
 const (
-	GitCommitUnknown    = "unknown"
+	GitCommitUnknown = "unknown"
 )
 
 var GitCommit = GitCommitUnknown
