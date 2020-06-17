@@ -380,7 +380,6 @@ func (g *genevaLogging) daemonset(r azure.Resource) *appsv1.DaemonSet {
 }
 
 func (g *genevaLogging) Resources(ctx context.Context) ([]runtime.Object, error) {
-	results := []runtime.Object{}
 	r, err := azure.ParseResourceID(g.resourceID)
 	if err != nil {
 		return nil, err
@@ -391,7 +390,7 @@ func (g *genevaLogging) Resources(ctx context.Context) ([]runtime.Object, error)
 		return nil, err
 	}
 
-	for _, obj := range []runtime.Object{
+	return append([]runtime.Object{},
 		&v1.Namespace{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Namespace",
@@ -433,10 +432,5 @@ func (g *genevaLogging) Resources(ctx context.Context) ([]runtime.Object, error)
 			},
 		},
 		scc,
-		g.daemonset(r),
-	} {
-		results = append(results, obj)
-	}
-
-	return results, nil
+		g.daemonset(r)), nil
 }
