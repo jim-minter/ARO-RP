@@ -13,7 +13,6 @@ import (
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/dynamichelper"
 	"github.com/Azure/ARO-RP/pkg/env"
-	kadiscovery "github.com/Azure/ARO-RP/pkg/frontend/kubeactions/discovery"
 	"github.com/Azure/ARO-RP/pkg/util/restconfig"
 )
 
