@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
@@ -17,13 +16,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
 
 	"github.com/Azure/ARO-RP/pkg/api"
+	kadiscovery "github.com/Azure/ARO-RP/pkg/dynamichelper/discovery"
 	"github.com/Azure/ARO-RP/pkg/util/cmp"
 )
 
@@ -65,17 +64,18 @@ func New(log *logrus.Entry, restconfig *rest.Config, updatePolicy UpdatePolicy) 
 }
 
 func (dh *dynamicHelper) refreshAPIResources() error {
+	var cli discovery.DiscoveryInterface
 	cli, err := discovery.NewDiscoveryClientForConfig(dh.restconfig)
 	if err != nil {
 		return err
 	}
-	err = retry.OnError(wait.Backoff{Steps: 5, Duration: 10 * time.Second, Factor: 1.5}, discovery.IsGroupDiscoveryFailedError, func() error {
-		_, dh.apiresources, err = cli.ServerGroupsAndResources()
-		return err
-	})
+	cli = kadiscovery.NewCacheFallbackDiscoveryClient(dh.log, cli)
+
+	_, dh.apiresources, err = cli.ServerGroupsAndResources()
 	if err != nil {
 		return err
 	}
+
 	dh.dyn, err = dynamic.NewForConfig(dh.restconfig)
 	return err
 }
@@ -202,7 +202,6 @@ func (dh *dynamicHelper) findGVRWithRefresh(groupKind, optionalVersion string) (
 	if !dh.updatePolicy.RefreshAPIResourcesOnNotFound {
 		return dh.findGVR(groupKind, optionalVersion)
 	}
-	// this is ugly and will get removed in favour of https://github.com/Azure/ARO-RP/pull/769
 	var gvr *schema.GroupVersionResource
 	err := retry.OnError(retry.DefaultRetry, isNotFoundError, func() error {
 		// this is used at cluster start up when kinds are still getting
