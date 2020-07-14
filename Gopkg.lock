@@ -294,17 +294,6 @@
   version = "v0.35.0"
 
 [[projects]]
-  branch = "release-0.38"
-  digest = "1:c6d514200d5764bbcea1b4923f1f34482b483d4edaacbd952aa9d029c6818cfa"
-  name = "github.com/coreos/prometheus-operator"
-  packages = [
-    "pkg/apis/monitoring",
-    "pkg/apis/monitoring/v1",
-  ]
-  pruneopts = "UT"
-  revision = "8fa7349020073bcc7932abb2bc4bd08e4bc3a0ac"
-
-[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -2045,7 +2034,7 @@
   source = "https://github.com/openshift/kubernetes-client-go"
 
 [[projects]]
-  digest = "1:33e0b95ecd5a902a0a5909540678a7b5531274b42e5988c7e3a384afe6084dd8"
+  digest = "1:349858f235d044e8de69128b54440553ffe3be06dd8b1343d60f18484b7201f5"
   name = "k8s.io/code-generator"
   packages = [
     "cmd/client-gen",
@@ -2062,8 +2051,8 @@
     "pkg/util",
   ]
   pruneopts = "UT"
-  revision = "d0071a11938089926a0faeb94ab9a934850250fd"
-  version = "kubernetes-1.16.0-beta.0"
+  revision = "e95606b614f049ef6087115cb340d8d5805b8da7"
+  version = "kubernetes-1.17.1"
 
 [[projects]]
   digest = "1:28514fabca4356625720ffb012408790a9d00d31963a9bd9daf7b5ccd894c301"
@@ -2261,7 +2250,6 @@
     "github.com/containers/image/signature",
     "github.com/containers/image/types",
     "github.com/coreos/go-systemd/journal",
-    "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1",
     "github.com/dgrijalva/jwt-go",
     "github.com/ghodss/yaml",
     "github.com/go-bindata/go-bindata/go-bindata",
@@ -2378,6 +2366,7 @@
     "k8s.io/code-generator/cmd/deepcopy-gen",
     "k8s.io/gengo/generator",
     "sigs.k8s.io/controller-runtime",
+    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
     "sigs.k8s.io/controller-runtime/pkg/event",
     "sigs.k8s.io/controller-runtime/pkg/predicate",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",

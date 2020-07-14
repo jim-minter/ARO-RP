@@ -19,8 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	aro "github.com/Azure/ARO-RP/operator/apis/aro.openshift.io/v1alpha1"
-	"github.com/Azure/ARO-RP/pkg/dynamichelper"
+	aro "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 	"github.com/Azure/ARO-RP/pkg/util/version"
 )
 
@@ -33,7 +32,6 @@ type genevaLogging struct {
 
 	resourceID               string
 	acrName                  string
-	namespace                string
 	configVersion            string
 	monitoringTenant         string
 	monitoringGCSRegion      string
@@ -52,12 +50,11 @@ func New(log *logrus.Entry, cs *aro.ClusterSpec, seccli securityclient.Interface
 		log: log,
 
 		resourceID:               cs.ResourceID,
-		acrName:                  cs.GenevaLogging.ACRName,
-		namespace:                cs.GenevaLogging.Namespace,
+		acrName:                  cs.ACRName,
+		monitoringGCSRegion:      cs.Location,
+		monitoringTenant:         cs.Location,
 		configVersion:            cs.GenevaLogging.ConfigVersion,
 		monitoringGCSEnvironment: cs.GenevaLogging.MonitoringGCSEnvironment,
-		monitoringGCSRegion:      cs.GenevaLogging.MonitoringGCSRegion,
-		monitoringTenant:         cs.GenevaLogging.MonitoringTenant,
 
 		certs: certs,
 
@@ -91,7 +88,7 @@ func (g *genevaLogging) daemonset(r azure.Resource) *appsv1.DaemonSet {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "mdsd",
-			Namespace: g.namespace,
+			Namespace: KubeNamespace,
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -397,7 +394,7 @@ func (g *genevaLogging) Resources(ctx context.Context) ([]runtime.Object, error)
 				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:        g.namespace,
+				Name:        KubeNamespace,
 				Annotations: map[string]string{projectv1.ProjectNodeSelector: ""},
 			},
 			Spec: v1.NamespaceSpec{
@@ -412,7 +409,7 @@ func (g *genevaLogging) Resources(ctx context.Context) ([]runtime.Object, error)
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "fluent-config",
-				Namespace: g.namespace,
+				Namespace: KubeNamespace,
 			},
 			Data: map[string]string{
 				"audit.conf":      auditConf,
@@ -428,7 +425,7 @@ func (g *genevaLogging) Resources(ctx context.Context) ([]runtime.Object, error)
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "geneva",
-				Namespace: g.namespace,
+				Namespace: KubeNamespace,
 			},
 		},
 		scc,

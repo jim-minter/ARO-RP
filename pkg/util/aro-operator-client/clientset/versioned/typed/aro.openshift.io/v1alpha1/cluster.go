@@ -13,7 +13,7 @@ import (
 	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"
 
-	v1alpha1 "github.com/Azure/ARO-RP/operator/apis/aro.openshift.io/v1alpha1"
+	v1alpha1 "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 	scheme "github.com/Azure/ARO-RP/pkg/util/aro-operator-client/clientset/versioned/scheme"
 )
 

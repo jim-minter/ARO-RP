@@ -184,15 +184,6 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "8fa7349020073bcc7932abb2bc4bd08e4bc3a0ac",
-                    "repositoryUrl": "https://github.com/coreos/prometheus-operator/"
-                }
-            }
-        },
-        {
-            "component": {
-                "type": "git",
-                "git": {
                     "commitHash": "8991bc29aa16c548c550c7ff78260e27b9ab7c73",
                     "repositoryUrl": "https://github.com/davecgh/go-spew/"
                 }
@@ -1327,7 +1318,7 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "commitHash": "d0071a11938089926a0faeb94ab9a934850250fd",
+                    "commitHash": "e95606b614f049ef6087115cb340d8d5805b8da7",
                     "repositoryUrl": "https://github.com/kubernetes/code-generator/"
                 }
             }

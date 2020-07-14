@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 
-	aro "github.com/Azure/ARO-RP/operator/apis/aro.openshift.io/v1alpha1"
+	aro "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 	"github.com/Azure/ARO-RP/pkg/util/ready"
 )
 
@@ -52,6 +52,26 @@ func updatedObjects() ([]string, error) {
 }
 
 var _ = Describe("ARO Operator", func() {
+	var originalURLs []string
+	BeforeEach(func() {
+		// save the originalURLs
+		co, err := clients.AROClusters.Clusters().Get("cluster", metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+		originalURLs = co.Spec.InternetChecker.URLs
+	})
+	AfterEach(func() {
+		// set the URLs back again
+		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			co, err := clients.AROClusters.Clusters().Get("cluster", metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			co.Spec.InternetChecker.URLs = originalURLs
+			_, err = clients.AROClusters.Clusters().Update(co)
+			return err
+		})
+		Expect(err).NotTo(HaveOccurred())
+	})
 	Specify("the InternetReachable default list should all be reachable", func() {
 		co, err := clients.AROClusters.Clusters().Get("cluster", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
@@ -59,15 +79,13 @@ var _ = Describe("ARO Operator", func() {
 		Expect(co.Status.Conditions.IsTrueFor(aro.InternetReachableFromWorker)).To(BeTrue())
 	})
 	Specify("custom invalid site shows not InternetReachable", func() {
-		var originalSites []string
-		// set an unreachable site
+		// set an unreachable URL
 		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 			co, err := clients.AROClusters.Clusters().Get("cluster", metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
-			originalSites = co.Spec.InternetChecker.Sites
-			co.Spec.InternetChecker.Sites = []string{"https://localhost:1234/shouldnotexist"}
+			co.Spec.InternetChecker.URLs = []string{"https://localhost:1234/shouldnotexist"}
 			_, err = clients.AROClusters.Clusters().Update(co)
 			return err
 		})
@@ -85,18 +103,6 @@ var _ = Describe("ARO Operator", func() {
 			return co.Status.Conditions.IsFalseFor(aro.InternetReachableFromMaster) &&
 				co.Status.Conditions.IsFalseFor(aro.InternetReachableFromWorker), nil
 		}, timeoutCtx.Done())
-		Expect(err).NotTo(HaveOccurred())
-
-		// set the sites back again
-		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			co, err := clients.AROClusters.Clusters().Get("cluster", metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			co.Spec.InternetChecker.Sites = originalSites
-			_, err = clients.AROClusters.Clusters().Update(co)
-			return err
-		})
 		Expect(err).NotTo(HaveOccurred())
 	})
 	Specify("genevalogging must be repaired if deployment deleted", func() {

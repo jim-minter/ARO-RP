@@ -6,12 +6,12 @@ package install
 import (
 	"context"
 
-	"github.com/Azure/ARO-RP/operator/deploy"
 	"github.com/Azure/ARO-RP/pkg/dynamichelper"
+	"github.com/Azure/ARO-RP/pkg/operator/deploy"
 	"github.com/Azure/ARO-RP/pkg/util/restconfig"
 )
 
-func (i *Installer) readyToDeployAroOperator() (bool, error) {
+func (i *Installer) readyToDeployAROOperator() (bool, error) {
 	restConfig, err := restconfig.RestConfig(i.env, i.doc.OpenShiftCluster)
 	if err != nil {
 		return false, err
@@ -24,12 +24,12 @@ func (i *Installer) readyToDeployAroOperator() (bool, error) {
 	return err == nil, nil
 }
 
-func (i *Installer) ensureAroOperator(ctx context.Context) error {
+func (i *Installer) ensureAROOperator(ctx context.Context) error {
 	dep, err := deploy.New(i.log, i.env, i.doc.OpenShiftCluster, i.kubernetescli, i.securitycli, i.arocli)
 	if err != nil {
 		return err
 	}
-	return dep.CreateOrUpdate(ctx)
+	return dep.CreateOrUpdate(ctx, i.env)
 }
 
 func (i *Installer) aroDeploymentReady() (bool, error) {
