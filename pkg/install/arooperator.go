@@ -6,8 +6,6 @@ package install
 import (
 	"context"
 
-	"k8s.io/client-go/discovery"
-
 	"github.com/Azure/ARO-RP/operator/deploy"
 	"github.com/Azure/ARO-RP/pkg/dynamichelper"
 	"github.com/Azure/ARO-RP/pkg/util/restconfig"
@@ -27,11 +25,8 @@ func (i *Installer) readyToDeployAroOperator() (bool, error) {
 }
 
 func (i *Installer) ensureAroOperator(ctx context.Context) error {
-	i.log.Print("Installing ARO operator resources")
-
 	dep, err := deploy.New(i.log, i.env, i.doc.OpenShiftCluster, i.kubernetescli, i.securitycli, i.arocli)
 	if err != nil {
-		i.log.Warnf("deploy.New %v", err)
 		return err
 	}
 	return dep.CreateOrUpdate(ctx)
@@ -40,10 +35,6 @@ func (i *Installer) ensureAroOperator(ctx context.Context) error {
 func (i *Installer) aroDeploymentReady() (bool, error) {
 	dep, err := deploy.New(i.log, i.env, i.doc.OpenShiftCluster, i.kubernetescli, i.securitycli, i.arocli)
 	if err != nil {
-		if discovery.IsGroupDiscoveryFailedError(err) {
-			return false, nil
-		}
-		i.log.Warnf("deploy.New %v", err)
 		return false, err
 	}
 	return dep.IsReady()
