@@ -12,7 +12,7 @@ import (
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
-	arov1alpha1 "github.com/Azure/ARO-RP/operator/apis/aro.openshift.io/v1alpha1"
+	arov1alpha1 "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 )
 
 var scheme = runtime.NewScheme()

@@ -13,7 +13,7 @@ import (
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
 
-	v1alpha1 "github.com/Azure/ARO-RP/operator/apis/aro.openshift.io/v1alpha1"
+	v1alpha1 "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 )
 
 // FakeClusters implements ClusterInterface

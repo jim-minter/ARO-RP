@@ -4,11 +4,9 @@ package genevalogging
 // Licensed under the Apache License 2.0.
 
 const (
-	KubeNamespace      = "openshift-azure-logging"
-	kubeServiceAccount = "system:serviceaccount:" + KubeNamespace + ":geneva"
-
-	fluentbitImageFormat = "%s.azurecr.io/fluentbit:1.3.9-1"
-	mdsdImageFormat      = "%s.azurecr.io/genevamdsd:master_285"
+	KubeNamespace          = "openshift-azure-logging"
+	kubeServiceAccount     = "system:serviceaccount:" + KubeNamespace + ":geneva"
+	CertificatesSecretName = "certificates"
 
 	genevaClusterLogsNamespace = "AROClusterLogs"
 	parsersConf                = `

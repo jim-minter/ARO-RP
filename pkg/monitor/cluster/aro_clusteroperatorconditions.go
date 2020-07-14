@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	aro "github.com/Azure/ARO-RP/operator/apis/aro.openshift.io/v1alpha1"
+	aro "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 )
 
 func (mon *Monitor) emitAroOperatorConditions(ctx context.Context) error {

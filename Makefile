@@ -1,8 +1,7 @@
 SHELL = /bin/bash
 COMMIT = $(shell git rev-parse --short HEAD)$(shell [[ $$(git status --porcelain) = "" ]] || echo -dirty)
 BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
-ARO_IMAGE_TAG ?= $(COMMIT)
-ARO_IMAGE ?= ${RP_IMAGE_ACR}.azurecr.io/aro:$(ARO_IMAGE_TAG)
+ARO_IMAGE ?= ${RP_IMAGE_ACR}.azurecr.io/aro:$(COMMIT)
 
 aro: generate
 	go build -ldflags "-X github.com/Azure/ARO-RP/pkg/util/version.GitCommit=$(COMMIT)" ./cmd/aro
@@ -74,9 +73,6 @@ image-routefix:
 	docker pull registry.access.redhat.com/ubi8/ubi
 	docker build -f Dockerfile.routefix -t ${RP_IMAGE_ACR}.azurecr.io/routefix:$(COMMIT) .
 
-get-aro-image:
-	@echo $(ARO_IMAGE)
-
 publish-image-aro: image-aro
 	docker push $(ARO_IMAGE)
 ifeq ("${RP_IMAGE_ACR}-$(BRANCH)","arointsvc-master")
@@ -125,9 +121,9 @@ e2e:
 test-go: generate
 	go build ./...
 
-	gofmt -s -w cmd hack pkg test operator
-	go run ./vendor/golang.org/x/tools/cmd/goimports -w -local=github.com/Azure/ARO-RP cmd hack pkg test operator
-	go run ./hack/validate-imports cmd hack pkg test operator
+	gofmt -s -w cmd hack pkg test
+	go run ./vendor/golang.org/x/tools/cmd/goimports -w -local=github.com/Azure/ARO-RP cmd hack pkg test
+	go run ./hack/validate-imports cmd hack pkg test
 	go run ./hack/licenses
 	@[ -z "$$(ls pkg/util/*.go 2>/dev/null)" ] || (echo error: go files are not allowed in pkg/util, use a subpackage; exit 1)
 	@[ -z "$$(find -name "*:*")" ] || (echo error: filenames with colons are not allowed on Windows, please rename; exit 1)
