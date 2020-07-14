@@ -1918,13 +1918,14 @@
 
 [[projects]]
   branch = "origin-4.4-kubernetes-1.17.1"
-  digest = "1:5ba86f4fe9f3d82ed177a07daa79063f42e607328e5a2a3ff77fde459b27239f"
+  digest = "1:72e2d2937f1e2315cfdb5887de8976d53038fab35d23116c44958464807a294c"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
     "discovery/cached/disk",
     "discovery/fake",
     "dynamic",
+    "dynamic/fake",
     "kubernetes",
     "kubernetes/fake",
     "kubernetes/scheme",
@@ -2360,9 +2361,11 @@
     "k8s.io/client-go/discovery/cached/disk",
     "k8s.io/client-go/discovery/fake",
     "k8s.io/client-go/dynamic",
+    "k8s.io/client-go/dynamic/fake",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/fake",
     "k8s.io/client-go/kubernetes/scheme",
+    "k8s.io/client-go/kubernetes/typed/apps/v1",
     "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/testing",
