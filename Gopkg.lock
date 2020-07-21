@@ -1602,10 +1602,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5e0fb9e9d8578aed12222c1a7eb7e57f35f6eb305b7aab02eeabbe4d36c60442"
+  digest = "1:05b4aa8b318e831eb6574f9598b2e356b6a5a381de2b8f206b8912f49e9f2966"
   name = "golang.org/x/tools"
   packages = [
     "cmd/goimports",
+    "cmd/goyacc",
     "cover",
     "go/ast/astutil",
     "go/gcexportdata",
@@ -2325,6 +2326,7 @@
     "golang.org/x/crypto/ssh",
     "golang.org/x/sync/errgroup",
     "golang.org/x/tools/cmd/goimports",
+    "golang.org/x/tools/cmd/goyacc",
     "golang.org/x/tools/go/ast/astutil",
     "golang.org/x/tools/go/packages",
     "k8s.io/api/apps/v1",

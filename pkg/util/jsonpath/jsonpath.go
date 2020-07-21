@@ -3,8 +3,7 @@ package jsonpath
 // Copyright (c) Microsoft Corporation.
 // Licensed under the Apache License 2.0.
 
-//go:generate go get golang.org/x/tools/cmd/goyacc
-//go:generate goyacc -l -o parser.go -v /dev/null parser.y
+//go:generate go run ../../../vendor/golang.org/x/tools/cmd/goyacc -l -o parser.go -v /dev/null parser.y
 
 import (
 	"bufio"
