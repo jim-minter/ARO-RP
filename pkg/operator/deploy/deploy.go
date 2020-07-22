@@ -11,12 +11,14 @@ import (
 
 	securityclient "github.com/openshift/client-go/security/clientset/versioned"
 	"github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/yaml"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/dynamichelper"
@@ -24,7 +26,6 @@ import (
 	"github.com/Azure/ARO-RP/pkg/genevalogging"
 	aro "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 	aroclient "github.com/Azure/ARO-RP/pkg/util/aro-operator-client/clientset/versioned/typed/aro.openshift.io/v1alpha1"
-	"github.com/Azure/ARO-RP/pkg/util/jsonpath"
 	"github.com/Azure/ARO-RP/pkg/util/pullsecret"
 	"github.com/Azure/ARO-RP/pkg/util/ready"
 	"github.com/Azure/ARO-RP/pkg/util/restconfig"
@@ -35,6 +36,20 @@ const (
 	KubeNamespace     = "openshift-azure-operator"
 	ACRPullSecretName = "acr-pullsecret-tokens"
 )
+
+var (
+	scheme = runtime.NewScheme()
+	codecs serializer.CodecFactory
+)
+
+func init() {
+	err := clientgoscheme.AddToScheme(scheme)
+	if err != nil {
+		panic(err)
+	}
+
+	codecs = serializer.NewCodecFactory(scheme)
+}
 
 type Operator interface {
 	CreateOrUpdate(ctx context.Context, _env env.Interface) error
@@ -127,18 +142,16 @@ func (o *operator) resources(ctx context.Context, _env env.Interface) ([]runtime
 		if err != nil {
 			return nil, err
 		}
-		obj := &unstructured.Unstructured{}
-		err = yaml.Unmarshal(b, obj)
+
+		obj, _, err := codecs.UniversalDeserializer().Decode(b, nil, nil)
 		if err != nil {
 			return nil, err
 		}
 
 		// set the image for the deployments
-		if obj.GroupVersionKind().GroupKind().String() == "Deployment.apps" {
-			for _, podSpec := range jsonpath.MustCompile("$.spec.template.spec").Get(obj.Object) {
-				for _, contaner := range jsonpath.MustCompile("$.containers.*").Get(podSpec.(map[string]interface{})) {
-					jsonpath.MustCompile("$.image").Set(contaner.(map[string]interface{}), _env.AROOperatorImage())
-				}
+		if d, ok := obj.(*appsv1.Deployment); ok {
+			for i := range d.Spec.Template.Spec.Containers {
+				d.Spec.Template.Spec.Containers[i].Image = _env.AROOperatorImage()
 			}
 		}
 
