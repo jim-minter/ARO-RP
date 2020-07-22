@@ -310,8 +310,7 @@ func TestCreateOrUpdate(t *testing.T) {
 			dh := &dynamicHelper{
 				log: testlog,
 				updatePolicy: UpdatePolicy{
-					LogChanges:     true,
-					IgnoreDefaults: true,
+					LogChanges: true,
 				},
 				dyn:          fakeDyn,
 				apiresources: tt.apiresources,

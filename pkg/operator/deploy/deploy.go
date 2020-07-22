@@ -75,7 +75,6 @@ func New(log *logrus.Entry, _env env.Interface, oc *api.OpenShiftCluster, cli ku
 		return nil, err
 	}
 	dh, err := dynamichelper.New(log, restConfig, dynamichelper.UpdatePolicy{
-		IgnoreDefaults:                true,
 		LogChanges:                    true,
 		RetryOnConflict:               true,
 		RefreshAPIResourcesOnNotFound: true,
@@ -219,7 +218,7 @@ func (o *operator) CreateOrUpdate(ctx context.Context, _env env.Interface) error
 	objects := []*unstructured.Unstructured{}
 	for _, res := range resources {
 		var un *unstructured.Unstructured
-		un, err = dynamichelper.ToUnstructured(res)
+		err = scheme.Convert(res, un, nil)
 		if err != nil {
 			return err
 		}

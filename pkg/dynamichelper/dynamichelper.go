@@ -9,12 +9,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -36,7 +34,6 @@ type DynamicHelper interface {
 type UpdatePolicy struct {
 	LogChanges                    bool
 	RetryOnConflict               bool
-	IgnoreDefaults                bool
 	RefreshAPIResourcesOnNotFound bool
 }
 
@@ -167,25 +164,6 @@ func (dh *dynamicHelper) List(ctx context.Context, groupKind, namespace string) 
 	return ul.MarshalJSON()
 }
 
-// ToUnstructured converts a runtime.Object into an Unstructured
-func ToUnstructured(ro runtime.Object) (*unstructured.Unstructured, error) {
-	obj, ok := ro.(*unstructured.Unstructured)
-	if !ok {
-		b, err := yaml.Marshal(ro)
-		if err != nil {
-			return nil, err
-		}
-		obj = &unstructured.Unstructured{}
-		err = yaml.Unmarshal(b, obj)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	cleanNewObject(*obj)
-	return obj, nil
-}
-
 func isNotFoundError(err error) bool {
 	if err == nil {
 		return false
@@ -241,15 +219,7 @@ func (dh *dynamicHelper) CreateOrUpdate(ctx context.Context, o *unstructured.Uns
 
 		rv := existing.GetResourceVersion()
 
-		if dh.updatePolicy.IgnoreDefaults {
-			err = clean(*existing)
-			if err != nil {
-				return err
-			}
-			defaults(*existing)
-		}
-
-		if !dh.needsUpdate(existing, o) {
+		if !dh.needsUpdate(reflect.ValueOf(existing.Object), reflect.ValueOf(o.Object)) {
 			return nil
 		}
 
@@ -265,9 +235,27 @@ func (dh *dynamicHelper) CreateOrUpdate(ctx context.Context, o *unstructured.Uns
 	return err
 }
 
-func (dh *dynamicHelper) needsUpdate(existing, o *unstructured.Unstructured) bool {
-	handleSpecialObjects(*existing, *o)
-	return !reflect.DeepEqual(*existing, *o)
+// needsUpdate: the idea is that we recursively compare existing and o; when we
+// get to a map, we only check if the keys that are set in o are identical in
+// existing.  We don't pay any attention to keys in existing that o has no
+// opinion about.
+func (dh *dynamicHelper) needsUpdate(existing, o reflect.Value) bool {
+	if existing.Type() != o.Type() {
+		return true
+	}
+
+	if o.Kind() == reflect.Map {
+		i := o.MapRange()
+		for i.Next() {
+			if dh.needsUpdate(existing.MapIndex(i.Key()), i.Value()) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return reflect.DeepEqual(existing.Interface(), o.Interface())
 }
 
 func (dh *dynamicHelper) logDiff(existing, o *unstructured.Unstructured) bool {
