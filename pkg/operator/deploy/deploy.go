@@ -5,6 +5,7 @@ package deploy
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"sort"
 
@@ -43,7 +44,7 @@ type Operator interface {
 type operator struct {
 	log *logrus.Entry
 
-	regTokens map[string]string
+	regTokens map[string][]byte
 
 	clusterSpec *aro.ClusterSpec
 
@@ -71,7 +72,7 @@ func New(log *logrus.Entry, _env env.Interface, oc *api.OpenShiftCluster, cli ku
 	o := &operator{
 		log: log,
 
-		regTokens: map[string]string{},
+		regTokens: map[string][]byte{},
 
 		clusterSpec: &aro.ClusterSpec{
 			ResourceID: oc.ID,
@@ -102,7 +103,7 @@ func New(log *logrus.Entry, _env env.Interface, oc *api.OpenShiftCluster, cli ku
 	regName := _env.ACRName() + ".azurecr.io"
 	for _, reg := range oc.Properties.RegistryProfiles {
 		if reg.Name == regName && string(reg.Password) != "" {
-			o.regTokens[regName] = reg.Username + ":" + string(reg.Password)
+			o.regTokens[regName] = []byte(reg.Username + ":" + string(reg.Password))
 		}
 	}
 	if _, ok := _env.(env.Dev); ok {
@@ -110,7 +111,10 @@ func New(log *logrus.Entry, _env env.Interface, oc *api.OpenShiftCluster, cli ku
 		if err != nil {
 			return nil, err
 		}
-		o.regTokens[regName] = auths[regName]["auth"].(string)
+		o.regTokens[regName], err = base64.StdEncoding.DecodeString(auths[regName]["auth"].(string))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return o, nil
 }
@@ -164,9 +168,9 @@ func (o *operator) resources(ctx context.Context, _env env.Interface) ([]runtime
 				Name:      genevalogging.CertificatesSecretName,
 				Namespace: KubeNamespace,
 			},
-			StringData: map[string]string{
-				"gcscert.pem": string(gcsCertBytes),
-				"gcskey.pem":  string(gcsKeyBytes),
+			Data: map[string][]byte{
+				"gcscert.pem": gcsCertBytes,
+				"gcskey.pem":  gcsKeyBytes,
 			},
 		},
 		&corev1.Secret{
@@ -178,8 +182,8 @@ func (o *operator) resources(ctx context.Context, _env env.Interface) ([]runtime
 				Name:      ACRPullSecretName,
 				Namespace: KubeNamespace,
 			},
-			Type:       corev1.SecretTypeOpaque,
-			StringData: o.regTokens,
+			Type: corev1.SecretTypeOpaque,
+			Data: o.regTokens,
 		},
 		&aro.Cluster{
 			TypeMeta: metav1.TypeMeta{

@@ -24,8 +24,8 @@ func TestHashWorkloadConfigs(t *testing.T) {
 			Name:      "certificates",
 			Namespace: "openshift-azure-logging",
 		},
-		StringData: map[string]string{
-			"stuff": "9485958",
+		Data: map[string][]byte{
+			"stuff": []byte("9485958"),
 		},
 	}
 	cm := &v1.ConfigMap{
@@ -115,7 +115,7 @@ func TestHashWorkloadConfigs(t *testing.T) {
 	HashWorkloadConfigs(objects)
 	expect := map[string]string{
 		"checksum/configmap-fluent-config": "290a2fb8ebdfcff1a489f434b2ac527dfe9af9ce94aadb6151f024f75272972b",
-		"checksum/secret-certificates":     "4829fa88cccbf7344f31ada2499e5a25ae906f99b9c6d1e4a271a5e71abe6cce",
+		"checksum/secret-certificates":     "bc36378e71a4c96ed0d0ba17717771c3df798d1ce3caeee694fe4edf4075318e",
 	}
 	newAnnotations, ok, err := unstructured.NestedStringMap(objects[2].Object, "spec", "template", "metadata", "annotations")
 	if err != nil || !ok {

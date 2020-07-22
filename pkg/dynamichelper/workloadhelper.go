@@ -75,9 +75,6 @@ func getHash(o *unstructured.Unstructured) string {
 	for _, v := range jsonpath.MustCompile("$.data").Get(o.Object) {
 		content = v.(map[string]interface{})
 	}
-	for _, v := range jsonpath.MustCompile("$.stringData").Get(o.Object) {
-		content = v.(map[string]interface{})
-	}
 	// sort config content appropriately
 	var keys []string
 	for key := range content {
