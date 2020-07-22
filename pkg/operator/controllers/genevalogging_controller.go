@@ -14,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -67,7 +68,6 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 		return reconcile.Result{}, err
 	}
 	dh, err := dynamichelper.New(r.log, r.restConfig, dynamichelper.UpdatePolicy{
-		IgnoreDefaults:  true,
 		LogChanges:      true,
 		RetryOnConflict: true,
 	})
@@ -111,7 +111,8 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 	})
 
 	for _, res := range resources {
-		un, err := dynamichelper.ToUnstructured(res)
+		var un *unstructured.Unstructured
+		err = r.scheme.Convert(res, un, nil)
 		if err != nil {
 			r.log.Error(err)
 			return reconcile.Result{}, err
