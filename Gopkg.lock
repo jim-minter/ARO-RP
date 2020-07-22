@@ -1602,11 +1602,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:05b4aa8b318e831eb6574f9598b2e356b6a5a381de2b8f206b8912f49e9f2966"
+  digest = "1:5e0fb9e9d8578aed12222c1a7eb7e57f35f6eb305b7aab02eeabbe4d36c60442"
   name = "golang.org/x/tools"
   packages = [
     "cmd/goimports",
-    "cmd/goyacc",
     "cover",
     "go/ast/astutil",
     "go/gcexportdata",
@@ -2257,7 +2256,6 @@
     "github.com/go-logr/logr",
     "github.com/golang/mock/gomock",
     "github.com/golang/mock/mockgen",
-    "github.com/golang/mock/mockgen/model",
     "github.com/google/go-cmp/cmp",
     "github.com/googleapis/gnostic/OpenAPIv2",
     "github.com/gorilla/mux",
@@ -2326,13 +2324,13 @@
     "golang.org/x/crypto/ssh",
     "golang.org/x/sync/errgroup",
     "golang.org/x/tools/cmd/goimports",
-    "golang.org/x/tools/cmd/goyacc",
     "golang.org/x/tools/go/ast/astutil",
     "golang.org/x/tools/go/packages",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
     "k8s.io/apimachinery/pkg/api/errors",
+    "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/api/resource",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured",
@@ -2374,7 +2372,6 @@
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/scheme",
     "sigs.k8s.io/controller-tools/cmd/controller-gen",
-    "sigs.k8s.io/yaml",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
