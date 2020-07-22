@@ -12,8 +12,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -83,32 +83,40 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 		return reconcile.Result{}, err
 	}
 
-	var objects []*unstructured.Unstructured
 	for _, res := range resources {
-		var un *unstructured.Unstructured
-		un, err = dynamichelper.ToUnstructured(res)
+		o, err := meta.Accessor(res)
 		if err != nil {
-			r.log.Error(err)
+			r.log.Errorf("Accessor %s/%s: %v", instance.Kind, instance.Name, err)
 			return reconcile.Result{}, err
 		}
 
 		// This sets the reference on all objects that we create
 		// to our cluster instance. This causes the Owns() below to work and
 		// to get Reconcile events when anything happens to our objects.
-		err = controllerutil.SetControllerReference(instance, un, r.scheme)
+		err = controllerutil.SetControllerReference(instance, o, r.scheme)
 		if err != nil {
 			r.log.Errorf("SetControllerReference %s/%s: %v", instance.Kind, instance.Name, err)
 			return reconcile.Result{}, err
 		}
-		objects = append(objects, un)
 	}
-	dynamichelper.HashWorkloadConfigs(objects)
 
-	sort.Slice(objects, func(i, j int) bool {
-		return dynamichelper.KindLess(objects[i].GetKind(), objects[j].GetKind())
+	err = dynamichelper.HashWorkloadConfigs(resources)
+	if err != nil {
+		r.log.Errorf("HashWorkloadConfigs %s/%s: %v", instance.Kind, instance.Name, err)
+		return reconcile.Result{}, err
+	}
+
+	sort.Slice(resources, func(i, j int) bool {
+		return dynamichelper.KindLess(resources[i].GetObjectKind().GroupVersionKind().Kind, resources[j].GetObjectKind().GroupVersionKind().Kind)
 	})
 
-	for _, un := range objects {
+	for _, res := range resources {
+		un, err := dynamichelper.ToUnstructured(res)
+		if err != nil {
+			r.log.Error(err)
+			return reconcile.Result{}, err
+		}
+
 		err = dh.CreateOrUpdate(ctx, un)
 		if err != nil {
 			r.log.Error(err)

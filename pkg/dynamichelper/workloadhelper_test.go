@@ -10,16 +10,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestHashWorkloadConfigs(t *testing.T) {
 	sec := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "certificates",
 			Namespace: "openshift-azure-logging",
@@ -29,10 +24,6 @@ func TestHashWorkloadConfigs(t *testing.T) {
 		},
 	}
 	cm := &v1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "fluent-config",
 			Namespace: "openshift-azure-logging",
@@ -45,10 +36,6 @@ func TestHashWorkloadConfigs(t *testing.T) {
 		},
 	}
 	ds := &appsv1.DaemonSet{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "DaemonSet",
-			APIVersion: "apps/v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "mdsd",
 			Namespace: "openshift-azure-logging",
@@ -104,25 +91,17 @@ func TestHashWorkloadConfigs(t *testing.T) {
 		},
 	}
 
-	var objects []*unstructured.Unstructured
-	for _, res := range []runtime.Object{cm, sec, ds} {
-		un, err := ToUnstructured(res)
-		if err != nil {
-			t.Error(err)
-		}
-		objects = append(objects, un)
+	err := HashWorkloadConfigs([]runtime.Object{cm, sec, ds})
+	if err != nil {
+		t.Fatal(err)
 	}
-	HashWorkloadConfigs(objects)
+
 	expect := map[string]string{
-		"checksum/configmap-fluent-config": "290a2fb8ebdfcff1a489f434b2ac527dfe9af9ce94aadb6151f024f75272972b",
-		"checksum/secret-certificates":     "bc36378e71a4c96ed0d0ba17717771c3df798d1ce3caeee694fe4edf4075318e",
+		"checksum/configmap-fluent-config": "aad6b208b25ce1becb4b9b6f14fce290f4e1bafd287813decc1e773ac2ec9c4e",
+		"checksum/secret-certificates":     "e6963d3f1943a7bf44ebfda9d0dc2c2c8f2295dbeed320c654f3489c2aed1344",
 	}
-	newAnnotations, ok, err := unstructured.NestedStringMap(objects[2].Object, "spec", "template", "metadata", "annotations")
-	if err != nil || !ok {
-		t.Error(err)
-		t.Error(ok)
-	}
-	if !reflect.DeepEqual(expect, newAnnotations) {
-		t.Error(newAnnotations)
+
+	if !reflect.DeepEqual(expect, ds.Spec.Template.Annotations) {
+		t.Error(ds.Spec.Template.Annotations)
 	}
 }
