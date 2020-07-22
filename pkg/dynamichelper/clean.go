@@ -4,9 +4,7 @@ package dynamichelper
 // Licensed under the Apache License 2.0.
 
 import (
-	"encoding/base64"
 	"regexp"
-	"unicode/utf8"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -41,38 +39,6 @@ func cleanPodTemplate(obj map[string]interface{}) {
 	jsonpath.MustCompile("$.spec.containers.*.imagePullPolicy").Delete(obj)
 
 	cleanMetadata(obj)
-}
-
-// ConvertSecretData converts data fields in a Secret to stringData fields
-// wherever it can.
-func ConvertSecretData(o unstructured.Unstructured) error {
-	if _, found := o.Object["data"]; !found {
-		return nil
-	}
-
-	data := o.Object["data"].(map[string]interface{})
-	stringData := map[string]interface{}{}
-
-	for k, v := range data {
-		b, err := base64.StdEncoding.DecodeString(v.(string))
-		if err != nil {
-			return err
-		}
-
-		if utf8.Valid(b) {
-			stringData[k] = string(b)
-			delete(data, k)
-		}
-	}
-
-	if len(stringData) > 0 {
-		o.Object["stringData"] = stringData
-	}
-	if len(data) == 0 {
-		delete(o.Object, "data")
-	}
-
-	return nil
 }
 
 // cleanNewObject cleans newly defined objects
@@ -140,11 +106,6 @@ func clean(o unstructured.Unstructured) error {
 			} {
 				jsonpath.MustCompile(k).Delete(o.Object)
 			}
-		}
-
-		err := ConvertSecretData(o)
-		if err != nil {
-			return err
 		}
 
 	case "Service":
