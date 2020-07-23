@@ -5,10 +5,14 @@ package dynamichelper
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,6 +21,7 @@ import (
 	ktesting "k8s.io/client-go/testing"
 
 	"github.com/Azure/ARO-RP/pkg/api"
+	"github.com/Azure/ARO-RP/pkg/util/cmp"
 	utillog "github.com/Azure/ARO-RP/pkg/util/log"
 )
 
@@ -325,5 +330,48 @@ func TestCreateOrUpdate(t *testing.T) {
 				t.Errorf("dynamicHelper.CreateOrUpdate update should be %v but was %v", tt.wantUpdate, updated)
 			}
 		})
+	}
+}
+
+func unmarshal(b []byte) (unstructured.Unstructured, error) {
+	obj := &unstructured.Unstructured{}
+	err := yaml.Unmarshal(b, obj)
+	return *obj, err
+}
+
+func TestNeedsUpdate(t *testing.T) {
+	testlog := utillog.GetLogger()
+	matches, err := filepath.Glob("testdata/needsUpdate/*-in.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dh := &dynamicHelper{
+		log:          testlog,
+		updatePolicy: UpdatePolicy{},
+	}
+
+	for _, match := range matches {
+		b, err := ioutil.ReadFile(match)
+		if err != nil {
+			t.Error(err)
+		}
+		in, err := unmarshal(b)
+		if err != nil {
+			t.Error(err)
+		}
+
+		b, err = ioutil.ReadFile(strings.Replace(match, "-in.yaml", "-out.yaml", -1))
+		if err != nil {
+			t.Error(err)
+		}
+		out, err := unmarshal(b)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if dh.needsUpdate(reflect.ValueOf(in.Object), reflect.ValueOf(out.Object)) {
+			t.Errorf("%s:\n%s", match, cmp.Diff(in, out))
+		}
 	}
 }

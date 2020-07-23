@@ -86,7 +86,7 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 	for _, res := range resources {
 		o, err := meta.Accessor(res)
 		if err != nil {
-			r.log.Errorf("Accessor %s/%s: %v", instance.Kind, instance.Name, err)
+			r.log.Errorf("Accessor %s/%s: %v", o.GetNamespace(), o.GetName(), err)
 			return reconcile.Result{}, err
 		}
 
@@ -95,14 +95,14 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 		// to get Reconcile events when anything happens to our objects.
 		err = controllerutil.SetControllerReference(instance, o, r.scheme)
 		if err != nil {
-			r.log.Errorf("SetControllerReference %s/%s: %v", instance.Kind, instance.Name, err)
+			r.log.Errorf("SetControllerReference %s/%s: %v", o.GetNamespace(), o.GetName(), err)
 			return reconcile.Result{}, err
 		}
 	}
 
 	err = dynamichelper.HashWorkloadConfigs(resources)
 	if err != nil {
-		r.log.Errorf("HashWorkloadConfigs %s/%s: %v", instance.Kind, instance.Name, err)
+		r.log.Errorf("HashWorkloadConfigs %v", err)
 		return reconcile.Result{}, err
 	}
 

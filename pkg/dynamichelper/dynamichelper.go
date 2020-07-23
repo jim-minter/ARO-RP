@@ -244,18 +244,40 @@ func (dh *dynamicHelper) needsUpdate(existing, o reflect.Value) bool {
 		return true
 	}
 
-	if o.Kind() == reflect.Map {
+	switch o.Kind() {
+	case reflect.Map:
 		i := o.MapRange()
 		for i.Next() {
 			if dh.needsUpdate(existing.MapIndex(i.Key()), i.Value()) {
 				return true
 			}
 		}
-
 		return false
-	}
 
-	return reflect.DeepEqual(existing.Interface(), o.Interface())
+	case reflect.Interface, reflect.Ptr:
+		if existing.IsNil() || o.IsNil() {
+			return existing.IsNil() != o.IsNil()
+		}
+
+		return dh.needsUpdate(existing.Elem(), o.Elem())
+
+	case reflect.Slice, reflect.Array:
+		if existing.IsNil() || o.IsNil() {
+			return existing.IsNil() != o.IsNil()
+		}
+		if o.Len() != existing.Len() {
+			return true
+		}
+		for i := 0; i < o.Len(); i++ {
+			if dh.needsUpdate(existing.Index(i), o.Index(i)) {
+				return true
+			}
+		}
+		return false
+
+	default:
+		return !reflect.DeepEqual(existing.Interface(), o.Interface())
+	}
 }
 
 func (dh *dynamicHelper) logDiff(existing, o *unstructured.Unstructured) bool {
