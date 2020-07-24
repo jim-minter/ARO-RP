@@ -111,7 +111,7 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 	})
 
 	for _, res := range resources {
-		var un *unstructured.Unstructured
+		un := &unstructured.Unstructured{}
 		err = r.scheme.Convert(res, un, nil)
 		if err != nil {
 			r.log.Error(err)
