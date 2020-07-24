@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,6 +45,14 @@ var (
 
 func init() {
 	err := clientgoscheme.AddToScheme(scheme)
+	if err != nil {
+		panic(err)
+	}
+	err = extv1beta1.AddToScheme(scheme)
+	if err != nil {
+		panic(err)
+	}
+	err = aro.AddToScheme(scheme)
 	if err != nil {
 		panic(err)
 	}
@@ -217,7 +226,7 @@ func (o *operator) CreateOrUpdate(ctx context.Context, _env env.Interface) error
 
 	objects := []*unstructured.Unstructured{}
 	for _, res := range resources {
-		var un *unstructured.Unstructured
+		un := &unstructured.Unstructured{}
 		err = scheme.Convert(res, un, nil)
 		if err != nil {
 			return err

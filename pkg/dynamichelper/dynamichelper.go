@@ -217,7 +217,7 @@ func (dh *dynamicHelper) CreateOrUpdate(ctx context.Context, o *unstructured.Uns
 			return err
 		}
 
-		rv := existing.GetResourceVersion()
+		copyImmutableFields(o, existing)
 
 		if !dh.needsUpdate(reflect.ValueOf(existing.Object), reflect.ValueOf(o.Object)) {
 			return nil
@@ -227,7 +227,6 @@ func (dh *dynamicHelper) CreateOrUpdate(ctx context.Context, o *unstructured.Uns
 			dh.log.Info("Update ", keyFuncO(o))
 		}
 
-		o.SetResourceVersion(rv)
 		_, err = dh.dyn.Resource(*gvr).Namespace(o.GetNamespace()).Update(o, metav1.UpdateOptions{})
 		return err
 	})
