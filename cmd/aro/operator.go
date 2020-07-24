@@ -32,7 +32,7 @@ func operator(ctx context.Context, log *logrus.Entry) error {
 		return fmt.Errorf("invalid role %s", role)
 	}
 
-	ctrl.SetLogger(utillog.GetRLogger(log))
+	ctrl.SetLogger(utillog.LogrWrapper(log))
 
 	restConfig, err := ctrl.GetConfig()
 	if err != nil {
