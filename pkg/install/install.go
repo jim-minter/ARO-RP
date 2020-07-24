@@ -194,7 +194,6 @@ func (i *Installer) Install(ctx context.Context, installConfig *installconfig.In
 			action(i.createCertificates),
 			action(i.initializeKubernetesClients),
 			condition{i.bootstrapConfigMapReady, 30 * time.Minute},
-			condition{i.readyToDeployAROOperator, 10 * time.Minute},
 			action(i.ensureIfReload),
 			action(i.ensureRouteFix),
 			action(i.ensureAROOperator),
