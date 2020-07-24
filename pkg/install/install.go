@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
 	"github.com/sirupsen/logrus"
+	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 
@@ -83,6 +84,7 @@ type Installer struct {
 	subnet          subnet.Manager
 
 	kubernetescli kubernetes.Interface
+	extcli        extensionsclient.Interface
 	operatorcli   operatorclient.Interface
 	configcli     configclient.Interface
 	samplescli    samplesclient.Interface
@@ -429,6 +431,11 @@ func (i *Installer) initializeKubernetesClients(ctx context.Context) error {
 	}
 
 	i.kubernetescli, err = kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+
+	i.extcli, err = extensionsclient.NewForConfig(restConfig)
 	if err != nil {
 		return err
 	}

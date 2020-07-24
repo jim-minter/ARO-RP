@@ -29,12 +29,12 @@ type DynamicHelper interface {
 	List(ctx context.Context, groupKind, namespace string) (*unstructured.UnstructuredList, error)
 	CreateOrUpdate(ctx context.Context, obj *unstructured.Unstructured) error
 	Delete(ctx context.Context, groupKind, namespace, name string) error
+	RefreshAPIResources() error
 }
 
 type UpdatePolicy struct {
-	LogChanges                    bool
-	RetryOnConflict               bool
-	RefreshAPIResourcesOnNotFound bool
+	LogChanges      bool
+	RetryOnConflict bool
 }
 
 type dynamicHelper struct {
@@ -53,14 +53,22 @@ func New(log *logrus.Entry, restconfig *rest.Config, updatePolicy UpdatePolicy) 
 		updatePolicy: updatePolicy,
 		restconfig:   restconfig,
 	}
-	err := dh.refreshAPIResources()
+
+	var err error
+	dh.dyn, err = dynamic.NewForConfig(dh.restconfig)
 	if err != nil {
 		return nil, err
 	}
+
+	err = dh.RefreshAPIResources()
+	if err != nil {
+		return nil, err
+	}
+
 	return dh, nil
 }
 
-func (dh *dynamicHelper) refreshAPIResources() error {
+func (dh *dynamicHelper) RefreshAPIResources() error {
 	var cli discovery.DiscoveryInterface
 	cli, err := discovery.NewDiscoveryClientForConfig(dh.restconfig)
 	if err != nil {
@@ -69,11 +77,6 @@ func (dh *dynamicHelper) refreshAPIResources() error {
 	cli = kadiscovery.NewCacheFallbackDiscoveryClient(dh.log, cli)
 
 	_, dh.apiresources, err = cli.ServerGroupsAndResources()
-	if err != nil {
-		return err
-	}
-
-	dh.dyn, err = dynamic.NewForConfig(dh.restconfig)
 	return err
 }
 
@@ -154,42 +157,8 @@ func (dh *dynamicHelper) List(ctx context.Context, groupKind, namespace string) 
 	return dh.dyn.Resource(*gvr).Namespace(namespace).List(metav1.ListOptions{})
 }
 
-func isNotFoundError(err error) bool {
-	if err == nil {
-		return false
-	}
-	switch typeOfErr := err.(type) {
-	case (*api.CloudError):
-		return (typeOfErr.Code == api.CloudErrorCodeNotFound)
-	default:
-		return false
-	}
-}
-
-func (dh *dynamicHelper) findGVRWithRefresh(groupKind, optionalVersion string) (*schema.GroupVersionResource, error) {
-	if !dh.updatePolicy.RefreshAPIResourcesOnNotFound {
-		return dh.findGVR(groupKind, optionalVersion)
-	}
-	var gvr *schema.GroupVersionResource
-	err := retry.OnError(retry.DefaultRetry, isNotFoundError, func() error {
-		// this is used at cluster start up when kinds are still getting
-		// registered.
-		var gvrErr error
-		gvr, gvrErr = dh.findGVR(groupKind, optionalVersion)
-		if isNotFoundError(gvrErr) {
-			dh.log.Infof("refreshAPIResources retrying")
-			if refErr := dh.refreshAPIResources(); refErr != nil {
-				dh.log.Infof("refreshAPIResources error: %v", refErr)
-				return refErr
-			}
-		}
-		return gvrErr
-	})
-	return gvr, err
-}
-
 func (dh *dynamicHelper) CreateOrUpdate(ctx context.Context, o *unstructured.Unstructured) error {
-	gvr, err := dh.findGVRWithRefresh(o.GroupVersionKind().GroupKind().String(), o.GroupVersionKind().Version)
+	gvr, err := dh.findGVR(o.GroupVersionKind().GroupKind().String(), o.GroupVersionKind().Version)
 	if err != nil {
 		return err
 	}

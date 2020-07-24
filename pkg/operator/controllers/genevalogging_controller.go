@@ -67,6 +67,9 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 		r.log.Error(err)
 		return reconcile.Result{}, err
 	}
+	// TODO: dh should be a field in r, but the fact that it is initialised here
+	// each time currently saves us in the case that the controller runs before
+	// the SCC API is registered.
 	dh, err := dynamichelper.New(r.log, r.restConfig, dynamichelper.UpdatePolicy{
 		LogChanges:      true,
 		RetryOnConflict: true,

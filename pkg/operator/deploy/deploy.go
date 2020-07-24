@@ -8,16 +8,19 @@ import (
 	"encoding/base64"
 	"os"
 	"sort"
+	"time"
 
 	securityclient "github.com/openshift/client-go/security/clientset/versioned"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	extensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
@@ -74,19 +77,19 @@ type operator struct {
 
 	dh     dynamichelper.DynamicHelper
 	cli    kubernetes.Interface
+	extcli extensionsclient.Interface
 	seccli securityclient.Interface
 	arocli aroclient.AroV1alpha1Interface
 }
 
-func New(log *logrus.Entry, _env env.Interface, oc *api.OpenShiftCluster, cli kubernetes.Interface, seccli securityclient.Interface, arocli aroclient.AroV1alpha1Interface) (Operator, error) {
+func New(log *logrus.Entry, _env env.Interface, oc *api.OpenShiftCluster, cli kubernetes.Interface, extcli extensionsclient.Interface, seccli securityclient.Interface, arocli aroclient.AroV1alpha1Interface) (Operator, error) {
 	restConfig, err := restconfig.RestConfig(_env, oc)
 	if err != nil {
 		return nil, err
 	}
 	dh, err := dynamichelper.New(log, restConfig, dynamichelper.UpdatePolicy{
-		LogChanges:                    true,
-		RetryOnConflict:               true,
-		RefreshAPIResourcesOnNotFound: true,
+		LogChanges:      true,
+		RetryOnConflict: true,
 	})
 	if err != nil {
 		return nil, err
@@ -242,6 +245,25 @@ func (o *operator) CreateOrUpdate(ctx context.Context, _env env.Interface) error
 		if err != nil {
 			return err
 		}
+
+		if un.GroupVersionKind().GroupKind().String() == "CustomResourceDefinition.apiextensions.k8s.io" {
+			err = wait.PollImmediate(time.Second, time.Minute, func() (bool, error) {
+				crd, err := o.extcli.ApiextensionsV1beta1().CustomResourceDefinitions().Get(un.GetName(), metav1.GetOptions{})
+				if err != nil {
+					return false, err
+				}
+
+				return isCRDEstablished(crd), nil
+			})
+			if err != nil {
+				return err
+			}
+
+			err = o.dh.RefreshAPIResources()
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -252,4 +274,13 @@ func (o *operator) IsReady() (bool, error) {
 		return ok, err
 	}
 	return ready.CheckDeploymentIsReady(o.cli.AppsV1().Deployments(KubeNamespace), "aro-operator-worker")()
+}
+
+func isCRDEstablished(crd *extv1beta1.CustomResourceDefinition) bool {
+	m := make(map[extv1beta1.CustomResourceDefinitionConditionType]extv1beta1.ConditionStatus, len(crd.Status.Conditions))
+	for _, cond := range crd.Status.Conditions {
+		m[cond.Type] = cond.Status
+	}
+	return m[extv1beta1.Established] == extv1beta1.ConditionTrue &&
+		m[extv1beta1.NamesAccepted] == extv1beta1.ConditionTrue
 }
