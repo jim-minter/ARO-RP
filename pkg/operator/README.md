@@ -49,7 +49,7 @@ Make sure KUBECONFIG is set:
 ```sh
 make admin.kubeconfig
 export KUBECONFIG=$(pwd)/admin.kubeconfig
-oc scale -n openshift-azure-operator deloyment/aro-operator-master --replicas=0
+oc scale -n openshift-azure-operator deployment/aro-operator-master --replicas=0
 make generate
 go run ./cmd/aro operator master
 ```
