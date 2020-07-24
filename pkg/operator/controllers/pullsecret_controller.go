@@ -12,7 +12,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
@@ -33,15 +32,13 @@ type PullsecretReconciler struct {
 	kubernetescli kubernetes.Interface
 	arocli        aroclient.AroV1alpha1Interface
 	log           *logrus.Entry
-	scheme        *runtime.Scheme
 }
 
-func NewPullsecretReconciler(log *logrus.Entry, kubernetescli kubernetes.Interface, arocli aroclient.AroV1alpha1Interface, scheme *runtime.Scheme) *PullsecretReconciler {
+func NewPullsecretReconciler(log *logrus.Entry, kubernetescli kubernetes.Interface, arocli aroclient.AroV1alpha1Interface) *PullsecretReconciler {
 	return &PullsecretReconciler{
 		log:           log,
 		kubernetescli: kubernetescli,
 		arocli:        arocli,
-		scheme:        scheme,
 	}
 }
 

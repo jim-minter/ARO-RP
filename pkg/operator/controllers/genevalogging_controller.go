@@ -15,8 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -35,17 +35,15 @@ type GenevaloggingReconciler struct {
 	arocli        aroclient.AroV1alpha1Interface
 	restConfig    *rest.Config
 	log           *logrus.Entry
-	scheme        *runtime.Scheme
 }
 
-func NewGenevaloggingReconciler(log *logrus.Entry, kubernetescli kubernetes.Interface, securitycli securityclient.Interface, arocli aroclient.AroV1alpha1Interface, restConfig *rest.Config, scheme *runtime.Scheme) *GenevaloggingReconciler {
+func NewGenevaloggingReconciler(log *logrus.Entry, kubernetescli kubernetes.Interface, securitycli securityclient.Interface, arocli aroclient.AroV1alpha1Interface, restConfig *rest.Config) *GenevaloggingReconciler {
 	return &GenevaloggingReconciler{
 		securitycli:   securitycli,
 		kubernetescli: kubernetescli,
 		arocli:        arocli,
 		restConfig:    restConfig,
 		log:           log,
-		scheme:        scheme,
 	}
 }
 
@@ -96,7 +94,7 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 		// This sets the reference on all objects that we create
 		// to our cluster instance. This causes the Owns() below to work and
 		// to get Reconcile events when anything happens to our objects.
-		err = controllerutil.SetControllerReference(instance, o, r.scheme)
+		err = controllerutil.SetControllerReference(instance, o, scheme.Scheme)
 		if err != nil {
 			r.log.Errorf("SetControllerReference %s/%s: %v", o.GetNamespace(), o.GetName(), err)
 			return reconcile.Result{}, err
@@ -115,7 +113,7 @@ func (r *GenevaloggingReconciler) Reconcile(request ctrl.Request) (ctrl.Result, 
 
 	for _, res := range resources {
 		un := &unstructured.Unstructured{}
-		err = r.scheme.Convert(res, un, nil)
+		err = scheme.Scheme.Convert(res, un, nil)
 		if err != nil {
 			r.log.Error(err)
 			return reconcile.Result{}, err

@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
@@ -29,14 +28,12 @@ var alertManagerName = types.NamespacedName{Name: "alertmanager-main", Namespace
 type AlertWebhookReconciler struct {
 	kubernetescli kubernetes.Interface
 	log           *logrus.Entry
-	scheme        *runtime.Scheme
 }
 
-func NewAlertWebhookReconciler(log *logrus.Entry, kubernetescli kubernetes.Interface, scheme *runtime.Scheme) *AlertWebhookReconciler {
+func NewAlertWebhookReconciler(log *logrus.Entry, kubernetescli kubernetes.Interface) *AlertWebhookReconciler {
 	return &AlertWebhookReconciler{
 		kubernetescli: kubernetescli,
 		log:           log,
-		scheme:        scheme,
 	}
 }
 

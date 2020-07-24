@@ -13,7 +13,6 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/status"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -27,17 +26,15 @@ type InternetChecker struct {
 	kubernetescli kubernetes.Interface
 	arocli        aroclient.AroV1alpha1Interface
 	log           *logrus.Entry
-	scheme        *runtime.Scheme
 	sr            *StatusReporter
 	placement     string
 }
 
-func NewInternetChecker(log *logrus.Entry, kubernetescli kubernetes.Interface, arocli aroclient.AroV1alpha1Interface, scheme *runtime.Scheme, placement string) *InternetChecker {
+func NewInternetChecker(log *logrus.Entry, kubernetescli kubernetes.Interface, arocli aroclient.AroV1alpha1Interface, placement string) *InternetChecker {
 	return &InternetChecker{
 		kubernetescli: kubernetescli,
 		arocli:        arocli,
 		log:           log,
-		scheme:        scheme,
 		placement:     placement,
 	}
 }

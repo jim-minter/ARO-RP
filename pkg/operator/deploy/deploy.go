@@ -19,10 +19,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/dynamichelper"
@@ -40,28 +39,6 @@ const (
 	KubeNamespace     = "openshift-azure-operator"
 	ACRPullSecretName = "acr-pullsecret-tokens"
 )
-
-var (
-	scheme = runtime.NewScheme()
-	codecs serializer.CodecFactory
-)
-
-func init() {
-	err := clientgoscheme.AddToScheme(scheme)
-	if err != nil {
-		panic(err)
-	}
-	err = extv1beta1.AddToScheme(scheme)
-	if err != nil {
-		panic(err)
-	}
-	err = aro.AddToScheme(scheme)
-	if err != nil {
-		panic(err)
-	}
-
-	codecs = serializer.NewCodecFactory(scheme)
-}
 
 type Operator interface {
 	CreateOrUpdate(ctx context.Context, _env env.Interface) error
@@ -154,7 +131,7 @@ func (o *operator) resources(ctx context.Context, _env env.Interface) ([]runtime
 			return nil, err
 		}
 
-		obj, _, err := codecs.UniversalDeserializer().Decode(b, nil, nil)
+		obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(b, nil, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -230,7 +207,7 @@ func (o *operator) CreateOrUpdate(ctx context.Context, _env env.Interface) error
 	objects := []*unstructured.Unstructured{}
 	for _, res := range resources {
 		un := &unstructured.Unstructured{}
-		err = scheme.Convert(res, un, nil)
+		err = scheme.Scheme.Convert(res, un, nil)
 		if err != nil {
 			return err
 		}

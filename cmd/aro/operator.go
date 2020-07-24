@@ -10,12 +10,9 @@ import (
 
 	securityclient "github.com/openshift/client-go/security/clientset/versioned"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	aro "github.com/Azure/ARO-RP/pkg/operator/apis/aro.openshift.io/v1alpha1"
 	"github.com/Azure/ARO-RP/pkg/operator/controllers"
 	aroclient "github.com/Azure/ARO-RP/pkg/util/aro-operator-client/clientset/versioned/typed/aro.openshift.io/v1alpha1"
 	utillog "github.com/Azure/ARO-RP/pkg/util/log"
@@ -26,21 +23,6 @@ const (
 	roleMaster = "master"
 	roleWorker = "worker"
 )
-
-var scheme = runtime.NewScheme()
-
-func init() {
-	err := clientgoscheme.AddToScheme(scheme)
-	if err != nil {
-		panic(err)
-	}
-
-	err = aro.AddToScheme(scheme)
-	if err != nil {
-		panic(err)
-	}
-	// +kubebuilder:scaffold:scheme
-}
 
 func operator(ctx context.Context, log *logrus.Entry) error {
 	role := flag.Arg(1)
@@ -58,7 +40,6 @@ func operator(ctx context.Context, log *logrus.Entry) error {
 	}
 
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
-		Scheme:             scheme,
 		MetricsBindAddress: "0", // disabled
 		Port:               8443,
 	})
@@ -83,20 +64,17 @@ func operator(ctx context.Context, log *logrus.Entry) error {
 		if err = (controllers.NewGenevaloggingReconciler(
 			log.WithField("controller", controllers.GenevaLoggingControllerName),
 			kubernetescli, securitycli, arocli,
-			restConfig,
-			scheme)).SetupWithManager(mgr); err != nil {
+			restConfig)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller Genevalogging: %v", err)
 		}
 		if err = (controllers.NewPullsecretReconciler(
 			log.WithField("controller", controllers.PullSecretControllerName),
-			kubernetescli, arocli,
-			scheme)).SetupWithManager(mgr); err != nil {
+			kubernetescli, arocli)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller PullSecret: %v", err)
 		}
 		if err = (controllers.NewAlertWebhookReconciler(
 			log.WithField("controller", controllers.AlertwebhookControllerName),
-			kubernetescli,
-			scheme)).SetupWithManager(mgr); err != nil {
+			kubernetescli)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller AlertWebhook: %v", err)
 		}
 	}
@@ -104,7 +82,6 @@ func operator(ctx context.Context, log *logrus.Entry) error {
 	if err = (controllers.NewInternetChecker(
 		log.WithField("controller", controllers.InternetCheckerControllerName),
 		kubernetescli, arocli,
-		scheme,
 		role,
 	)).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller InternetChecker: %v", err)
