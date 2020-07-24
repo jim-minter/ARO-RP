@@ -147,4 +147,3 @@ admin.kubeconfig:
 	hack/get-admin-kubeconfig.sh /subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RESOURCEGROUP}/providers/Microsoft.RedHatOpenShift/openShiftClusters/${CLUSTER} >admin.kubeconfig
 
 .PHONY: admin.kubeconfig aro az clean client generate image-aro image-fluentbit image-ifreload image-proxy image-routefix proxy publish-image-aro publish-image-fluentbit publish-image-ifreload publish-image-proxy publish-image-routefix secrets secrets-update test-go test-python
-

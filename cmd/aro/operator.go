@@ -7,7 +7,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"strings"
 
 	securityclient "github.com/openshift/client-go/security/clientset/versioned"
 	"github.com/sirupsen/logrus"
@@ -23,9 +22,12 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
-var (
-	scheme = runtime.NewScheme()
+const (
+	roleMaster = "master"
+	roleWorker = "worker"
 )
+
+var scheme = runtime.NewScheme()
 
 func init() {
 	err := clientgoscheme.AddToScheme(scheme)
@@ -41,55 +43,60 @@ func init() {
 }
 
 func operator(ctx context.Context, log *logrus.Entry) error {
-	flag.Parse()
-	role := strings.ToLower(flag.Arg(1))
+	role := flag.Arg(1)
+	switch role {
+	case roleMaster, roleWorker:
+	default:
+		return fmt.Errorf("invalid role %s", role)
+	}
+
 	ctrl.SetLogger(utillog.GetRLogger(log))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: "0", // disabled
-		Port:               8443,
-		LeaderElection:     false, // disabled
-	})
-	if err != nil {
-		return err
-	}
 	restConfig, err := ctrl.GetConfig()
 	if err != nil {
 		return err
 	}
 
-	kubernetescli, err := kubernetes.NewForConfig(mgr.GetConfig())
-	if err != nil {
-		return err
-	}
-	securitycli, err := securityclient.NewForConfig(mgr.GetConfig())
-	if err != nil {
-		return err
-	}
-	arocli, err := aroclient.NewForConfig(mgr.GetConfig())
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
+		Scheme:             scheme,
+		MetricsBindAddress: "0", // disabled
+		Port:               8443,
+	})
 	if err != nil {
 		return err
 	}
 
-	if role == "master" {
+	kubernetescli, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+	securitycli, err := securityclient.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+	arocli, err := aroclient.NewForConfig(restConfig)
+	if err != nil {
+		return err
+	}
+
+	if role == roleMaster {
 		if err = (controllers.NewGenevaloggingReconciler(
 			log.WithField("controller", controllers.GenevaLoggingControllerName),
 			kubernetescli, securitycli, arocli,
 			restConfig,
-			mgr.GetScheme())).SetupWithManager(mgr); err != nil {
+			scheme)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller Genevalogging: %v", err)
 		}
 		if err = (controllers.NewPullsecretReconciler(
 			log.WithField("controller", controllers.PullSecretControllerName),
 			kubernetescli, arocli,
-			mgr.GetScheme())).SetupWithManager(mgr); err != nil {
+			scheme)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller PullSecret: %v", err)
 		}
 		if err = (controllers.NewAlertWebhookReconciler(
 			log.WithField("controller", controllers.AlertwebhookControllerName),
 			kubernetescli,
-			mgr.GetScheme())).SetupWithManager(mgr); err != nil {
+			scheme)).SetupWithManager(mgr); err != nil {
 			return fmt.Errorf("unable to create controller AlertWebhook: %v", err)
 		}
 	}
@@ -97,7 +104,7 @@ func operator(ctx context.Context, log *logrus.Entry) error {
 	if err = (controllers.NewInternetChecker(
 		log.WithField("controller", controllers.InternetCheckerControllerName),
 		kubernetescli, arocli,
-		mgr.GetScheme(),
+		scheme,
 		role,
 	)).SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("unable to create controller InternetChecker: %v", err)
