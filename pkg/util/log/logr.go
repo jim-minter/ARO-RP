@@ -24,22 +24,13 @@ func (lw *logrWrapper) Error(err error, msg string, keysAndValues ...interface{}
 }
 
 func (lw *logrWrapper) withKeysAndValues(keysAndValues []interface{}) *logrus.Entry {
-	if len(keysAndValues) == 0 {
-		return lw.entry
-	}
-	key := ""
 	fields := logrus.Fields{}
-	for _, item := range keysAndValues {
-		if key == "" {
-			key = fmt.Sprint(item)
-		} else {
-			fields[key] = fmt.Sprint(item)
-			key = ""
+	for i := 0; i < len(keysAndValues); i += 2 {
+		var v interface{}
+		if i+1 < len(keysAndValues) {
+			v = keysAndValues[i+1]
 		}
-	}
-	if key != "" {
-		// key with no value
-		fields[key] = ""
+		fields[fmt.Sprint(keysAndValues[i])] = v
 	}
 
 	return lw.entry.WithFields(fields)
