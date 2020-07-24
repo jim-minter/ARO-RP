@@ -4,7 +4,6 @@ package controllers
 // Licensed under the Apache License 2.0.
 
 import (
-	"io"
 	"net"
 	"net/http"
 
@@ -94,20 +93,13 @@ func triggerAlertReconcile(secret *corev1.Secret) bool {
 }
 
 func aroserverRun(log *logrus.Entry) error {
-	ln, err := net.Listen("tcp", ":8080")
+	l, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		return err
 	}
 
-	go func() {
-		err := http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			_, err := io.WriteString(w, "")
-			if err != nil {
-				log.Debug(err)
-			}
-		}))
-		log.Info("http.Serve", err)
-	}()
+	go http.Serve(l, http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+
 	return nil
 }
 

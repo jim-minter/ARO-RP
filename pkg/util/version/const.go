@@ -3,11 +3,7 @@ package version
 // Copyright (c) Microsoft Corporation.
 // Licensed under the Apache License 2.0.
 
-const (
-	GitCommitUnknown = "unknown"
-)
-
-var GitCommit = GitCommitUnknown
+var GitCommit = "unknown"
 
 // InstallStream describes stream we are defaulting to for all new clusters
 var InstallStream = Stream{
