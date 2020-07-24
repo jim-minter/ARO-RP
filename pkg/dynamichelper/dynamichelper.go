@@ -25,8 +25,8 @@ import (
 )
 
 type DynamicHelper interface {
-	Get(ctx context.Context, groupKind, namespace, name string) ([]byte, error)
-	List(ctx context.Context, groupKind, namespace string) ([]byte, error)
+	Get(ctx context.Context, groupKind, namespace, name string) (*unstructured.Unstructured, error)
+	List(ctx context.Context, groupKind, namespace string) (*unstructured.UnstructuredList, error)
 	CreateOrUpdate(ctx context.Context, obj *unstructured.Unstructured) error
 	Delete(ctx context.Context, groupKind, namespace, name string) error
 }
@@ -136,32 +136,22 @@ func (dh *dynamicHelper) findGVR(groupKind, optionalVersion string) (*schema.Gro
 	return matches[0], nil
 }
 
-func (dh *dynamicHelper) Get(ctx context.Context, groupKind, namespace, name string) ([]byte, error) {
+func (dh *dynamicHelper) Get(ctx context.Context, groupKind, namespace, name string) (*unstructured.Unstructured, error) {
 	gvr, err := dh.findGVR(groupKind, "")
 	if err != nil {
 		return nil, err
 	}
 
-	un, err := dh.dyn.Resource(*gvr).Namespace(namespace).Get(name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return un.MarshalJSON()
+	return dh.dyn.Resource(*gvr).Namespace(namespace).Get(name, metav1.GetOptions{})
 }
 
-func (dh *dynamicHelper) List(ctx context.Context, groupKind, namespace string) ([]byte, error) {
+func (dh *dynamicHelper) List(ctx context.Context, groupKind, namespace string) (*unstructured.UnstructuredList, error) {
 	gvr, err := dh.findGVR(groupKind, "")
 	if err != nil {
 		return nil, err
 	}
 
-	ul, err := dh.dyn.Resource(*gvr).Namespace(namespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return ul.MarshalJSON()
+	return dh.dyn.Resource(*gvr).Namespace(namespace).List(metav1.ListOptions{})
 }
 
 func isNotFoundError(err error) bool {

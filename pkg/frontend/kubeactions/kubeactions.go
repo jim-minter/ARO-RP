@@ -46,7 +46,12 @@ func (ka *kubeactions) Get(ctx context.Context, oc *api.OpenShiftCluster, groupK
 		return nil, err
 	}
 
-	return dh.Get(ctx, groupKind, namespace, name)
+	un, err := dh.Get(ctx, groupKind, namespace, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return un.MarshalJSON()
 }
 
 func (ka *kubeactions) List(ctx context.Context, oc *api.OpenShiftCluster, groupKind, namespace string) ([]byte, error) {
@@ -59,7 +64,12 @@ func (ka *kubeactions) List(ctx context.Context, oc *api.OpenShiftCluster, group
 		return nil, err
 	}
 
-	return dh.List(ctx, groupKind, namespace)
+	ul, err := dh.List(ctx, groupKind, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return ul.MarshalJSON()
 }
 
 func (ka *kubeactions) CreateOrUpdate(ctx context.Context, oc *api.OpenShiftCluster, obj *unstructured.Unstructured) error {
