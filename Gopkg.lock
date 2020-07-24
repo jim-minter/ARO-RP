@@ -1836,12 +1836,16 @@
 
 [[projects]]
   branch = "release-1.17"
-  digest = "1:97d68e1b4c043da3a358cbfb4076e416199452c06e326b2ca0eef721b52aa1a4"
+  digest = "1:f0b431fe72d7510dfe7f3f177317391621ddb500843f5661dab7520d22735a66"
   name = "k8s.io/apiextensions-apiserver"
   packages = [
     "pkg/apis/apiextensions",
     "pkg/apis/apiextensions/v1",
     "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset",
+    "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1",
   ]
   pruneopts = "UT"
   revision = "88d23e1d281b9aa0cb534c4cdf3ed01af4b180b9"
@@ -2256,7 +2260,6 @@
     "github.com/go-logr/logr",
     "github.com/golang/mock/gomock",
     "github.com/golang/mock/mockgen",
-    "github.com/golang/mock/mockgen/model",
     "github.com/google/go-cmp/cmp",
     "github.com/googleapis/gnostic/OpenAPIv2",
     "github.com/gorilla/mux",
@@ -2327,9 +2330,12 @@
     "golang.org/x/tools/cmd/goimports",
     "golang.org/x/tools/go/ast/astutil",
     "golang.org/x/tools/go/packages",
+    "gopkg.in/yaml.v2",
     "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/api/rbac/v1",
+    "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
+    "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/api/meta",
     "k8s.io/apimachinery/pkg/api/resource",
