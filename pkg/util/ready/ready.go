@@ -23,18 +23,6 @@ func NodeIsReady(node *corev1.Node) bool {
 	return false
 }
 
-// PodIsReady returns true if a Pod is considered ready
-func PodIsReady(pod *corev1.Pod) bool {
-	for _, c := range pod.Status.Conditions {
-		if c.Type == corev1.PodReady &&
-			c.Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-
-	return false
-}
-
 // DaemonSetIsReady returns true if a DaemonSet is considered ready
 func DaemonSetIsReady(ds *appsv1.DaemonSet) bool {
 	return ds.Status.DesiredNumberScheduled == ds.Status.NumberAvailable &&
