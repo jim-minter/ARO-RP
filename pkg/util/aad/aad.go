@@ -6,10 +6,10 @@ package aad
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/ARO-RP/pkg/util/refreshable"
+
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/dgrijalva/jwt-go"
@@ -48,10 +48,12 @@ func GetToken(ctx context.Context, log *logrus.Entry, oc *api.OpenShiftCluster, 
 	conf := auth.NewClientCredentialsConfig(spp.ClientID, string(spp.ClientSecret), spp.TenantID)
 	conf.Resource = resource
 
-	token, err := conf.ServicePrincipalToken()
+	sp, err := conf.ServicePrincipalToken()
 	if err != nil {
 		return nil, err
 	}
+
+	token := refreshable.NewAuthorizer(sp)
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
@@ -59,21 +61,12 @@ func GetToken(ctx context.Context, log *logrus.Entry, oc *api.OpenShiftCluster, 
 	// NOTE: Do not override err with the error returned by wait.PollImmediateUntil.
 	// Doing this will not propagate the latest error to the user in case when wait exceeds the timeout
 	wait.PollImmediateUntil(10*time.Second, func() (bool, error) {
-		err = token.RefreshWithContext(ctx)
+		done, err := token.RefreshWithContext(ctx, log)
+		if !done && err == nil {
+			return done, nil
+		}
 		if err != nil {
-			isAADSTS700016 := strings.Contains(err.Error(), "AADSTS700016")
-			isTokenRefreshError := autorest.IsTokenRefreshError(err)
-
-			// populate err with a user-facing error that will be visible if
-			// we're not successful.
-			log.Info(err)
-			err = api.NewCloudError(http.StatusBadRequest, api.CloudErrorCodeInvalidServicePrincipalCredentials, "properties.servicePrincipalProfile", "The provided service principal credentials are invalid.")
-
-			if !isTokenRefreshError || isAADSTS700016 {
-				return false, nil
-			}
-
-			return false, err
+			return false, api.NewCloudError(http.StatusBadRequest, api.CloudErrorCodeInvalidServicePrincipalCredentials, "properties.servicePrincipalProfile", "The provided service principal credentials are invalid.")
 		}
 
 		p := &jwt.Parser{}

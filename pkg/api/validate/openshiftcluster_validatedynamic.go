@@ -393,12 +393,10 @@ func validateActions(ctx context.Context, log *logrus.Entry, r *azure.Resource, 
 		permissions, err := client.ListForResource(ctx, r.ResourceGroup, r.Provider, "", r.ResourceType, r.ResourceName)
 		if detailedErr, ok := err.(autorest.DetailedError); ok &&
 			detailedErr.StatusCode == http.StatusForbidden {
-			log.Print(err)
-			err = authorizer.RefreshWithContext(ctx)
-			if err != nil {
-				return false, err
+			done, err = authorizer.RefreshWithContext(ctx, log)
+			if !done && err == nil {
+				return done, nil
 			}
-			return false, nil
 		}
 		if err != nil {
 			return false, err
