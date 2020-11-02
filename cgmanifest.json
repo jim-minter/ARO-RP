@@ -22,6 +22,15 @@
             "component": {
                 "type": "go",
                 "go": {
+                    "version": "v0.2.1",
+                    "name": "github.com/Azure/azure-kusto-go"
+                }
+            }
+        },
+        {
+            "component": {
+                "type": "go",
+                "go": {
                     "version": "v48.0.0+incompatible",
                     "name": "github.com/Azure/azure-sdk-for-go"
                 }
@@ -202,7 +211,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v1.35.20",
+                    "version": "v1.35.23",
                     "name": "github.com/aws/aws-sdk-go"
                 }
             }
@@ -328,7 +337,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v1.1.0",
+                    "version": "v1.1.1",
                     "name": "github.com/dimchansky/utfbom"
                 }
             }
@@ -589,6 +598,15 @@
             "component": {
                 "type": "go",
                 "go": {
+                    "version": "v0.0.2",
+                    "name": "github.com/golang/snappy"
+                }
+            }
+        },
+        {
+            "component": {
+                "type": "go",
+                "go": {
                     "version": "v1.0.0",
                     "name": "github.com/google/btree"
                 }
@@ -672,6 +690,15 @@
                 "go": {
                     "version": "v0.0.0-20190611155906-901d90724c79",
                     "name": "github.com/gregjones/httpcache"
+                }
+            }
+        },
+        {
+            "component": {
+                "type": "go",
+                "go": {
+                    "version": "v1.16.0",
+                    "name": "github.com/grpc-ecosystem/grpc-gateway"
                 }
             }
         },
@@ -1174,6 +1201,15 @@
             "component": {
                 "type": "go",
                 "go": {
+                    "version": "v2.3.2+incompatible",
+                    "name": "github.com/prometheus/prometheus"
+                }
+            }
+        },
+        {
+            "component": {
+                "type": "go",
+                "go": {
                     "version": "v1.2.0",
                     "name": "github.com/satori/go.uuid"
                 }
@@ -1345,7 +1381,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v0.0.0-20201101102859-da207088b7d1",
+                    "version": "v0.0.0-20201106081118-db71ae66460a",
                     "name": "golang.org/x/sys"
                 }
             }
@@ -1372,7 +1408,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v0.0.0-20201104183702-aefe0b742155",
+                    "version": "v0.0.0-20201105220310-78b158585360",
                     "name": "golang.org/x/tools"
                 }
             }
@@ -1399,7 +1435,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v0.34.0",
+                    "version": "v0.35.0",
                     "name": "google.golang.org/api"
                 }
             }
@@ -1417,7 +1453,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v0.0.0-20201104152603-2e45c02ce95c",
+                    "version": "v0.0.0-20201106154455-f9bfe239b0ba",
                     "name": "google.golang.org/genproto"
                 }
             }
@@ -1426,7 +1462,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v1.33.1",
+                    "version": "v1.33.2",
                     "name": "google.golang.org/grpc"
                 }
             }
@@ -1588,7 +1624,7 @@
             "component": {
                 "type": "go",
                 "go": {
-                    "version": "v0.0.0-20201027101359-01387209bb0d",
+                    "version": "v0.0.0-20201104234853-8146046b121e",
                     "name": "k8s.io/utils"
                 }
             }

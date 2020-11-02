@@ -4,6 +4,21 @@ cloud.google.com/go/compute/metadata
 # github.com/AlekSi/gocov-xml v0.0.0-20190121064608-3a14fb1c4737
 ## explicit
 github.com/AlekSi/gocov-xml
+# github.com/Azure/azure-kusto-go v0.2.1
+## explicit
+github.com/Azure/azure-kusto-go/kusto
+github.com/Azure/azure-kusto-go/kusto/data/errors
+github.com/Azure/azure-kusto-go/kusto/data/table
+github.com/Azure/azure-kusto-go/kusto/data/types
+github.com/Azure/azure-kusto-go/kusto/data/value
+github.com/Azure/azure-kusto-go/kusto/internal/frames
+github.com/Azure/azure-kusto-go/kusto/internal/frames/unmarshal
+github.com/Azure/azure-kusto-go/kusto/internal/frames/unmarshal/json
+github.com/Azure/azure-kusto-go/kusto/internal/frames/v1
+github.com/Azure/azure-kusto-go/kusto/internal/frames/v2
+github.com/Azure/azure-kusto-go/kusto/internal/log
+github.com/Azure/azure-kusto-go/kusto/internal/version
+github.com/Azure/azure-kusto-go/kusto/unsafe
 # github.com/Azure/azure-sdk-for-go v48.0.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/profiles/latest/dns/mgmt/dns
@@ -78,7 +93,7 @@ github.com/alvaroloes/enumer
 # github.com/apparentlymart/go-cidr v1.1.0
 ## explicit
 github.com/apparentlymart/go-cidr/cidr
-# github.com/aws/aws-sdk-go v1.35.20
+# github.com/aws/aws-sdk-go v1.35.23
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -205,7 +220,8 @@ github.com/coreos/ignition/config/v2_5_experimental/types
 github.com/coreos/ignition/config/validate/report
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dimchansky/utfbom v1.1.0
+# github.com/dimchansky/utfbom v1.1.1
+## explicit
 github.com/dimchansky/utfbom
 # github.com/docker/distribution v2.7.1+incompatible
 github.com/docker/distribution
@@ -280,8 +296,12 @@ github.com/go-test/deep
 # github.com/gobuffalo/flect v0.2.1
 github.com/gobuffalo/flect
 # github.com/gogo/protobuf v1.3.1
+## explicit
+github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
+github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
+github.com/gogo/protobuf/types
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/mock v1.4.4
@@ -290,11 +310,18 @@ github.com/golang/mock/gomock
 github.com/golang/mock/mockgen
 github.com/golang/mock/mockgen/model
 # github.com/golang/protobuf v1.4.3
+github.com/golang/protobuf/descriptor
+github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
+github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+github.com/golang/protobuf/ptypes/wrappers
+# github.com/golang/snappy v0.0.2
+## explicit
+github.com/golang/snappy
 # github.com/google/btree v1.0.0
 github.com/google/btree
 # github.com/google/go-cmp v0.5.2
@@ -349,6 +376,11 @@ github.com/gorilla/mux
 ## explicit
 github.com/gregjones/httpcache
 github.com/gregjones/httpcache/diskcache
+# github.com/grpc-ecosystem/grpc-gateway v1.16.0
+## explicit
+github.com/grpc-ecosystem/grpc-gateway/internal
+github.com/grpc-ecosystem/grpc-gateway/runtime
+github.com/grpc-ecosystem/grpc-gateway/utilities
 # github.com/h2non/filetype v1.1.0
 ## explicit
 github.com/h2non/filetype/matchers
@@ -507,7 +539,7 @@ github.com/openshift/client-go/samples/clientset/versioned/typed/samples/v1
 github.com/openshift/client-go/security/clientset/versioned
 github.com/openshift/client-go/security/clientset/versioned/scheme
 github.com/openshift/client-go/security/clientset/versioned/typed/security/v1
-# github.com/openshift/cloud-credential-operator v0.0.0-20201019195225-1e5a13b5a796 => github.com/openshift/cloud-credential-operator v0.0.0-20200926024851-4ef74fd4ae81
+# github.com/openshift/cloud-credential-operator v0.0.0-20201106220945-43f2d57ce2ac => github.com/openshift/cloud-credential-operator v0.0.0-20200926024851-4ef74fd4ae81
 ## explicit
 github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1
 github.com/openshift/cloud-credential-operator/pkg/aws
@@ -676,6 +708,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/prometheus/prometheus v2.3.2+incompatible
+## explicit
+github.com/prometheus/prometheus/prompb
 # github.com/satori/go.uuid v1.2.0
 ## explicit
 github.com/satori/go.uuid
@@ -803,7 +838,7 @@ golang.org/x/oauth2/jwt
 ## explicit
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20201101102859-da207088b7d1
+# golang.org/x/sys v0.0.0-20201106081118-db71ae66460a
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
@@ -835,7 +870,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 ## explicit
 golang.org/x/time/rate
-# golang.org/x/tools v0.0.0-20201104183702-aefe0b742155
+# golang.org/x/tools v0.0.0-20201105220310-78b158585360
 ## explicit
 golang.org/x/tools/cmd/goimports
 golang.org/x/tools/cover
@@ -861,7 +896,8 @@ golang.org/x/xerrors/internal
 # gomodules.xyz/jsonpatch/v2 v2.1.0
 ## explicit
 gomodules.xyz/jsonpatch/v2
-# google.golang.org/api v0.34.0
+# google.golang.org/api v0.35.0
+## explicit
 google.golang.org/api/cloudresourcemanager/v1
 google.golang.org/api/compute/v1
 google.golang.org/api/dns/v1
@@ -889,10 +925,14 @@ google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20201104152603-2e45c02ce95c
+# google.golang.org/genproto v0.0.0-20201106154455-f9bfe239b0ba
 ## explicit
+google.golang.org/genproto/googleapis/api/annotations
+google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.33.1
+google.golang.org/genproto/protobuf/field_mask
+# google.golang.org/grpc v1.33.2
+## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -934,12 +974,14 @@ google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
 # google.golang.org/protobuf v1.25.0
+google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
 google.golang.org/protobuf/internal/descopts
 google.golang.org/protobuf/internal/detrand
 google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/json
 google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
@@ -956,13 +998,17 @@ google.golang.org/protobuf/internal/set
 google.golang.org/protobuf/internal/strs
 google.golang.org/protobuf/internal/version
 google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protodesc
 google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
+google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
+google.golang.org/protobuf/types/known/fieldmaskpb
 google.golang.org/protobuf/types/known/timestamppb
+google.golang.org/protobuf/types/known/wrapperspb
 # gopkg.in/AlecAivazis/survey.v1 v1.8.9-0.20200217094205-6773bdf39b7f
 gopkg.in/AlecAivazis/survey.v1
 gopkg.in/AlecAivazis/survey.v1/core
@@ -1231,11 +1277,11 @@ k8s.io/klog
 # k8s.io/klog/v2 v2.4.0
 ## explicit
 k8s.io/klog/v2
-# k8s.io/kube-openapi v0.0.0-20201104192653-842b07581b16 => k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
+# k8s.io/kube-openapi v0.0.0-20201106092651-fd18780d1fff => k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 ## explicit
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
-# k8s.io/utils v0.0.0-20201027101359-01387209bb0d
+# k8s.io/utils v0.0.0-20201104234853-8146046b121e
 ## explicit
 k8s.io/utils/buffer
 k8s.io/utils/integer
