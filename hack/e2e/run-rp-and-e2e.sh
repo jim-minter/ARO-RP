@@ -64,9 +64,18 @@ register_sub() {
       "https://localhost:8443/subscriptions/$AZURE_SUBSCRIPTION_ID?api-version=2.0"
 }
 
-run_e2e() {
-    RESOURCEGROUP=$ARO_RESOURCEGROUP make test-e2e
+get_e2e_image_version(){
+    curl -s -w "\n%{http_code}" "https://${ARO_VERSION_SA}.blob.core.windows.net/rpversion/${LOCATION}" | {
+    read body
+    read code
+    if [[ $code == "200" ]]; then
+        echo $body
+    else
+        echo "latest"
+    fi
+    }
 }
+
 
 clean_e2e_db(){
     echo "########## 🧹 Deleting DB $DATABASE_NAME ##########"

@@ -24,6 +24,20 @@ steps:
     . ./hack/e2e/run-rp-and-e2e.sh
 
     export CI=true
-    run_e2e
+    export ARO_IMAGE="$RP_IMAGE_ACR:$(get_e2e_image_version)"
+    export TEST_E2E="docker run \
+                --network host \
+                --env-file <(env | egrep 'AZURE|E2E|ARO') \
+                --env LOCATION \
+                --env CI \
+                --env RESOURCEGROUP \
+                --env CLUSTER \
+                --env RP_MODE \
+                --entrypoint e2e.test $ARO_IMAGE"
+
+    export RESOURCEGROUP=$ARO_RESOURCEGROUP
+    export TEST_E2E=$TEST_E2E
+
+    make test-e2e
   displayName: 🚀 Run ${{ parameters.location }} E2E
 - template: ./template-az-cli-logout.yml

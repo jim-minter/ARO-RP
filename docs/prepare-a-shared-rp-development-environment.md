@@ -277,6 +277,12 @@ locations.
    EOF
    ```
 
+1. In INT and Prod test environments these variables have to be set:
+
+   ```bash
+   ARO_VERSION_SA=rpVersionStorageAccountName (value from RP-Config)
+   RP_IMAGE_ACR=rpImagePrefix (value from RP-Config)
+   ```
 
 ## Deploy shared RP development environment (once per location)
 

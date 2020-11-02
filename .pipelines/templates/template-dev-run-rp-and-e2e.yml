@@ -1,0 +1,20 @@
+steps:
+- script: |
+    set -e
+    set -o pipefail
+
+    . secrets/env
+
+    set -x
+    . ./hack/e2e/run-rp-and-e2e.sh
+    trap kill_rp EXIT
+
+    run_rp
+    validate_rp_running
+    register_sub
+
+    export CI=true
+    export RESOURCEGROUP=$ARO_RESOURCEGROUP
+
+    make test-e2e
+  displayName: 🚀 Run ARO RP & E2E
