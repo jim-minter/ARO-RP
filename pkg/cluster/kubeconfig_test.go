@@ -19,7 +19,7 @@ import (
 )
 
 func TestGenerateAROServiceKubeconfig(t *testing.T) {
-	validCaKey, validCaCerts, err := utiltls.GenerateKeyAndCertificate("validca", nil, nil, true, false)
+	validCaKey, validCaCerts, err := utiltls.GenerateKeyAndCertificate([]string{"validca"}, nil, nil, true, false)
 	if err != nil {
 		t.Fatal(err)
 	}

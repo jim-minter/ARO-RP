@@ -41,12 +41,12 @@ var (
 func init() {
 	var err error
 
-	clientkey, clientcerts, err = utiltls.GenerateKeyAndCertificate("client", nil, nil, false, true)
+	clientkey, clientcerts, err = utiltls.GenerateKeyAndCertificate([]string{"client"}, nil, nil, false, true)
 	if err != nil {
 		panic(err)
 	}
 
-	serverkey, servercerts, err = utiltls.GenerateKeyAndCertificate("server", nil, nil, false, false)
+	serverkey, servercerts, err = utiltls.GenerateKeyAndCertificate([]string{"server"}, nil, nil, false, false)
 	if err != nil {
 		panic(err)
 	}

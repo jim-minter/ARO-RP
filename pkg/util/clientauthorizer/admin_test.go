@@ -17,7 +17,7 @@ func TestAdminClientAuthorizer(t *testing.T) {
 	caBundlePath := "/fake/path/to/ca/cert.pem"
 	log := logrus.NewEntry(logrus.StandardLogger())
 
-	validCaKey, validCaCerts, err := utiltls.GenerateKeyAndCertificate("validca", nil, nil, true, false)
+	validCaKey, validCaCerts, err := utiltls.GenerateKeyAndCertificate([]string{"validca"}, nil, nil, true, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func TestAdminClientAuthorizer(t *testing.T) {
 			name: "allow: single valid client certificate",
 			want: true,
 			cs: func() (*tls.ConnectionState, error) {
-				_, validSingleClientCert, err := utiltls.GenerateKeyAndCertificate("validclient", validCaKey, validCaCerts[0], false, true)
+				_, validSingleClientCert, err := utiltls.GenerateKeyAndCertificate([]string{"validclient"}, validCaKey, validCaCerts[0], false, true)
 				if err != nil {
 					return nil, err
 				}
@@ -45,12 +45,12 @@ func TestAdminClientAuthorizer(t *testing.T) {
 			name: "allow: valid client certificate with intermediates",
 			want: true,
 			cs: func() (*tls.ConnectionState, error) {
-				validIntermediateCaKey, validIntermediateCaCerts, err := utiltls.GenerateKeyAndCertificate("valid-intermediate-ca", validCaKey, validCaCerts[0], true, false)
+				validIntermediateCaKey, validIntermediateCaCerts, err := utiltls.GenerateKeyAndCertificate([]string{"valid-intermediate-ca"}, validCaKey, validCaCerts[0], true, false)
 				if err != nil {
 					return nil, err
 				}
 
-				_, validCertWithIntermediates, err := utiltls.GenerateKeyAndCertificate("validclient", validIntermediateCaKey, validIntermediateCaCerts[0], false, true)
+				_, validCertWithIntermediates, err := utiltls.GenerateKeyAndCertificate([]string{"validclient"}, validIntermediateCaKey, validIntermediateCaCerts[0], false, true)
 				if err != nil {
 					return nil, err
 				}
@@ -64,7 +64,7 @@ func TestAdminClientAuthorizer(t *testing.T) {
 		{
 			name: "deny: valid certificate with unexpected common name",
 			cs: func() (*tls.ConnectionState, error) {
-				_, invalidCommonNameClientCert, err := utiltls.GenerateKeyAndCertificate("invalidclient", validCaKey, validCaCerts[0], false, true)
+				_, invalidCommonNameClientCert, err := utiltls.GenerateKeyAndCertificate([]string{"invalidclient"}, validCaKey, validCaCerts[0], false, true)
 				if err != nil {
 					return nil, err
 				}
@@ -77,7 +77,7 @@ func TestAdminClientAuthorizer(t *testing.T) {
 		{
 			name: "deny: certificate with unexpected key usage",
 			cs: func() (*tls.ConnectionState, error) {
-				_, invalidKeyUsagesCert, err := utiltls.GenerateKeyAndCertificate("validclient", validCaKey, validCaCerts[0], false, false)
+				_, invalidKeyUsagesCert, err := utiltls.GenerateKeyAndCertificate([]string{"validclient"}, validCaKey, validCaCerts[0], false, false)
 				if err != nil {
 					return nil, err
 				}
@@ -90,12 +90,12 @@ func TestAdminClientAuthorizer(t *testing.T) {
 		{
 			name: "deny: matching common name, but unexpected ca",
 			cs: func() (*tls.ConnectionState, error) {
-				invalidCaKey, invalidCaCerts, err := utiltls.GenerateKeyAndCertificate("invalidca", nil, nil, true, false)
+				invalidCaKey, invalidCaCerts, err := utiltls.GenerateKeyAndCertificate([]string{"invalidca"}, nil, nil, true, false)
 				if err != nil {
 					return nil, err
 				}
 
-				_, invalidSigningCa, err := utiltls.GenerateKeyAndCertificate("validclient", invalidCaKey, invalidCaCerts[0], false, true)
+				_, invalidSigningCa, err := utiltls.GenerateKeyAndCertificate([]string{"validclient"}, invalidCaKey, invalidCaCerts[0], false, true)
 				if err != nil {
 					return nil, err
 				}
@@ -151,12 +151,12 @@ func TestAdminClientAuthorizer(t *testing.T) {
 }
 
 func TestAdminClientAuthorizerReadCABundle(t *testing.T) {
-	validCaKey, validCaCerts, err := utiltls.GenerateKeyAndCertificate("validca", nil, nil, true, false)
+	validCaKey, validCaCerts, err := utiltls.GenerateKeyAndCertificate([]string{"validca"}, nil, nil, true, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, validClientCert, err := utiltls.GenerateKeyAndCertificate("validclient", validCaKey, validCaCerts[0], false, true)
+	_, validClientCert, err := utiltls.GenerateKeyAndCertificate([]string{"validclient"}, validCaKey, validCaCerts[0], false, true)
 	if err != nil {
 		t.Fatal(err)
 	}

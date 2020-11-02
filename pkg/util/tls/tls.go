@@ -13,15 +13,15 @@ import (
 	"time"
 )
 
-func GenerateKeyAndCertificate(commonName string, parentKey *rsa.PrivateKey, parentCert *x509.Certificate, isCA bool, isClient bool) (*rsa.PrivateKey, []*x509.Certificate, error) {
-	return generateKeyAndCertificate(commonName, parentKey, parentCert, isCA, isClient, nil)
+func GenerateKeyAndCertificate(dnsNames []string, parentKey *rsa.PrivateKey, parentCert *x509.Certificate, isCA bool, isClient bool) (*rsa.PrivateKey, []*x509.Certificate, error) {
+	return generateKeyAndCertificate(dnsNames, parentKey, parentCert, isCA, isClient, nil)
 }
 
-func GenerateTestKeyAndCertificate(commonName string, parentKey *rsa.PrivateKey, parentCert *x509.Certificate, isCA bool, isClient bool, tweakTemplate func(*x509.Certificate)) (*rsa.PrivateKey, []*x509.Certificate, error) {
-	return generateKeyAndCertificate(commonName, parentKey, parentCert, isCA, isClient, tweakTemplate)
+func GenerateTestKeyAndCertificate(dnsNames []string, parentKey *rsa.PrivateKey, parentCert *x509.Certificate, isCA bool, isClient bool, tweakTemplate func(*x509.Certificate)) (*rsa.PrivateKey, []*x509.Certificate, error) {
+	return generateKeyAndCertificate(dnsNames, parentKey, parentCert, isCA, isClient, tweakTemplate)
 }
 
-func generateKeyAndCertificate(commonName string, parentKey *rsa.PrivateKey, parentCert *x509.Certificate, isCA bool, isClient bool, tweakTemplate func(*x509.Certificate)) (*rsa.PrivateKey, []*x509.Certificate, error) {
+func generateKeyAndCertificate(dnsNames []string, parentKey *rsa.PrivateKey, parentCert *x509.Certificate, isCA bool, isClient bool, tweakTemplate func(*x509.Certificate)) (*rsa.PrivateKey, []*x509.Certificate, error) {
 	if isCA && isClient {
 		return nil, nil, fmt.Errorf("cannot generate CA client certificate")
 	}
@@ -47,10 +47,11 @@ func generateKeyAndCertificate(commonName string, parentKey *rsa.PrivateKey, par
 		SerialNumber:          serialNumber,
 		NotBefore:             now,
 		NotAfter:              notAfter,
-		Subject:               pkix.Name{CommonName: commonName},
+		Subject:               pkix.Name{CommonName: dnsNames[0]},
 		BasicConstraintsValid: true,
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		IsCA:                  isCA,
+		DNSNames:              dnsNames,
 	}
 
 	if isCA {

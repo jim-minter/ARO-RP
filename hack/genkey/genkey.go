@@ -23,7 +23,7 @@ var (
 	certFile = flag.String("certFile", "", `file containing signing certificate in der format (default "" - self-signed)`)
 )
 
-func run(name string) error {
+func run() error {
 	var signingKey *rsa.PrivateKey
 	var signingCert *x509.Certificate
 
@@ -51,19 +51,19 @@ func run(name string) error {
 		}
 	}
 
-	key, cert, err := tls.GenerateKeyAndCertificate(name, signingKey, signingCert, *ca, *client)
+	key, cert, err := tls.GenerateKeyAndCertificate(flag.Args(), signingKey, signingCert, *ca, *client)
 	if err != nil {
 		return err
 	}
 
 	// key in der format
-	err = ioutil.WriteFile(name+".key", x509.MarshalPKCS1PrivateKey(key), 0600)
+	err = ioutil.WriteFile(flag.Arg(0)+".key", x509.MarshalPKCS1PrivateKey(key), 0600)
 	if err != nil {
 		return err
 	}
 
 	// cert in der format
-	err = ioutil.WriteFile(name+".crt", cert[0].Raw, 0666)
+	err = ioutil.WriteFile(flag.Arg(0)+".crt", cert[0].Raw, 0666)
 	if err != nil {
 		return err
 	}
@@ -85,11 +85,11 @@ func run(name string) error {
 	}
 
 	// key and cert in PKCS#8 PEM format for Azure Key Vault.
-	return ioutil.WriteFile(name+".pem", buf.Bytes(), 0600)
+	return ioutil.WriteFile(flag.Arg(0)+".pem", buf.Bytes(), 0600)
 }
 
 func usage() {
-	fmt.Fprintf(flag.CommandLine.Output(), "usage: %s commonName\n", os.Args[0])
+	fmt.Fprintf(flag.CommandLine.Output(), "usage: %s commonName...\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
@@ -97,12 +97,12 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	if len(flag.Args()) != 1 {
+	if len(flag.Args()) == 0 {
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	if err := run(flag.Arg(0)); err != nil {
+	if err := run(); err != nil {
 		panic(err)
 	}
 }

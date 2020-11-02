@@ -28,12 +28,12 @@ import (
 func TestSecurity(t *testing.T) {
 	ctx := context.Background()
 
-	validclientkey, validclientcerts, err := utiltls.GenerateKeyAndCertificate("validclient", nil, nil, false, true)
+	validclientkey, validclientcerts, err := utiltls.GenerateKeyAndCertificate([]string{"validclient"}, nil, nil, false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	validadminclientkey, validadminclientcerts, err := utiltls.GenerateKeyAndCertificate("validclient", nil, nil, false, true)
+	validadminclientkey, validadminclientcerts, err := utiltls.GenerateKeyAndCertificate([]string{"validclient"}, nil, nil, false, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestSecurity(t *testing.T) {
 	l := listener.NewListener()
 	defer l.Close()
 
-	serverkey, servercerts, err := utiltls.GenerateKeyAndCertificate("server", nil, nil, false, false)
+	serverkey, servercerts, err := utiltls.GenerateKeyAndCertificate([]string{"server"}, nil, nil, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func TestSecurity(t *testing.T) {
 	_env.EXPECT().AdminClientAuthorizer().AnyTimes().Return(clientauthorizer.NewOne(validadminclientcerts[0].Raw))
 	_env.EXPECT().Listen().AnyTimes().Return(l, nil)
 
-	invalidclientkey, invalidclientcerts, err := utiltls.GenerateKeyAndCertificate("invalidclient", nil, nil, false, true)
+	invalidclientkey, invalidclientcerts, err := utiltls.GenerateKeyAndCertificate([]string{"invalidclient"}, nil, nil, false, true)
 	if err != nil {
 		t.Fatal(err)
 	}

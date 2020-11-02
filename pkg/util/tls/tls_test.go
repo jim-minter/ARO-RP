@@ -12,7 +12,7 @@ import (
 )
 
 func TestGenerateKeyAndCertificate(t *testing.T) {
-	caKey, caCerts, err := GenerateKeyAndCertificate("ca", nil, nil, true, false)
+	caKey, caCerts, err := GenerateKeyAndCertificate([]string{"ca"}, nil, nil, true, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func TestGenerateKeyAndCertificate(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			key, certs, err := GenerateKeyAndCertificate(tt.name, tt.parentKey, tt.parentCert, tt.isCA, tt.isClient)
+			key, certs, err := GenerateKeyAndCertificate([]string{tt.name}, tt.parentKey, tt.parentCert, tt.isCA, tt.isClient)
 			if err != nil {
 				if err.Error() == tt.wantErr {
 					return
