@@ -25,6 +25,10 @@ client: generate
 generate:
 	go generate ./...
 
+image-apiserver-proxy: apiserver-proxy
+	docker pull registry.access.redhat.com/ubi8/ubi-minimal
+	docker build --no-cache -f Dockerfile.apiserver-proxy -t ${RP_IMAGE_ACR}.azurecr.io/apiserver-proxy:latest .
+
 image-aro: aro e2e.test
 	docker pull registry.access.redhat.com/ubi8/ubi-minimal
 	docker build --no-cache -f Dockerfile.aro -t $(ARO_IMAGE) .
@@ -33,13 +37,12 @@ image-fluentbit:
 	docker build --no-cache --build-arg VERSION=1.3.9-1 \
 	  -f Dockerfile.fluentbit -t ${RP_IMAGE_ACR}.azurecr.io/fluentbit:1.3.9-1 .
 
-image-proxy: proxy
-	docker pull registry.access.redhat.com/ubi8/ubi-minimal
-	docker build --no-cache -f Dockerfile.proxy -t ${RP_IMAGE_ACR}.azurecr.io/proxy:latest .
-
 image-routefix:
 	docker pull registry.access.redhat.com/ubi8/ubi
 	docker build --no-cache -f Dockerfile.routefix -t ${RP_IMAGE_ACR}.azurecr.io/routefix:$(COMMIT) .
+
+publish-image-apiserver-proxy: image-apiserver-proxy
+	docker push ${RP_IMAGE_ACR}.azurecr.io/apiserver-proxy:latest
 
 publish-image-aro: image-aro
 	docker push $(ARO_IMAGE)
@@ -51,14 +54,11 @@ endif
 publish-image-fluentbit: image-fluentbit
 	docker push ${RP_IMAGE_ACR}.azurecr.io/fluentbit:1.3.9-1
 
-publish-image-proxy: image-proxy
-	docker push ${RP_IMAGE_ACR}.azurecr.io/proxy:latest
-
 publish-image-routefix: image-routefix
 	docker push ${RP_IMAGE_ACR}.azurecr.io/routefix:$(COMMIT)
 
-proxy:
-	go build -ldflags "-X github.com/Azure/ARO-RP/pkg/util/version.GitCommit=$(COMMIT)" ./hack/proxy
+apiserver-proxy:
+	go build -ldflags "-X github.com/Azure/ARO-RP/pkg/util/version.GitCommit=$(COMMIT)" ./hack/apiserver-proxy
 
 pyenv:
 	virtualenv pyenv
@@ -117,4 +117,4 @@ vendor:
 	go mod tidy
 	go mod vendor
 
-.PHONY: admin.kubeconfig aro az clean client generate image-aro image-fluentbit image-proxy image-routefix proxy publish-image-aro publish-image-fluentbit publish-image-proxy publish-image-routefix secrets secrets-update e2e.test test-e2e test-go test-python vendor
+.PHONY: admin.kubeconfig apiserver-proxy aro az clean client generate image-apiserver-proxy image-aro image-fluentbit image-routefix publish-image-apiserver-proxy publish-image-aro publish-image-fluentbit publish-image-routefix secrets secrets-update e2e.test test-e2e test-go test-python vendor

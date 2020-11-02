@@ -6,15 +6,15 @@ package main
 import (
 	"flag"
 
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	utillog "github.com/Azure/ARO-RP/pkg/util/log"
 	"github.com/Azure/ARO-RP/pkg/util/version"
 )
 
 var (
-	certFile       = flag.String("certFile", "secrets/proxy.crt", "file containing server certificate")
-	keyFile        = flag.String("keyFile", "secrets/proxy.key", "file containing server key")
-	clientCertFile = flag.String("clientCertFile", "secrets/proxy-client.crt", "file containing client certificate")
+	certFile       = flag.String("certFile", "secrets/apiserver-proxy.crt", "file containing server certificate")
+	keyFile        = flag.String("keyFile", "secrets/apiserver-proxy.key", "file containing server key")
+	clientCertFile = flag.String("clientCertFile", "secrets/apiserver-proxy-client.crt", "file containing client certificate")
 	subnet         = flag.String("subnet", "10.0.0.0/8", "allowed subnet")
 )
 
@@ -25,7 +25,7 @@ func main() {
 
 	flag.Parse()
 
-	s := &proxy.Server{
+	s := &apiserverproxy.Server{
 		CertFile:       *certFile,
 		KeyFile:        *keyFile,
 		ClientCertFile: *clientCertFile,

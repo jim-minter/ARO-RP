@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal
 RUN microdnf update && microdnf clean all
-COPY proxy /usr/local/bin
-ENTRYPOINT ["proxy"]
+COPY apiserver-proxy /usr/local/bin
+ENTRYPOINT ["apiserver-proxy"]
 EXPOSE 8443/tcp
 USER 1000

@@ -16,13 +16,13 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/Azure/ARO-RP/pkg/api"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	"github.com/Azure/ARO-RP/pkg/util/restconfig"
 )
 
 // dialSpdy connects to the specified path on the API server of oc and
 // negotiates SPDY
-func dialSpdy(ctx context.Context, dialer proxy.Dialer, oc *api.OpenShiftCluster, path string) (httpstream.Connection, error) {
+func dialSpdy(ctx context.Context, dialer apiserverproxy.Dialer, oc *api.OpenShiftCluster, path string) (httpstream.Connection, error) {
 	restconfig, err := restconfig.RestConfig(dialer, oc)
 	if err != nil {
 		return nil, err

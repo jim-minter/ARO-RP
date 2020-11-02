@@ -201,27 +201,28 @@ locations.
    mv vpn-client.* secrets
    ```
 
-1. Create the proxy serving key/certificate.  A suitable key/certificate file
-   can be generated using the following helper utility:
+1. Create the (development) API server proxy serving key/certificate.  A
+   suitable key/certificate file can be generated using the following helper
+   utility:
 
    ```bash
-   go run ./hack/genkey proxy
-   mv proxy.* secrets
+   go run ./hack/genkey apiserver-proxy
+   mv apiserver-proxy.* secrets
    ```
 
-1. Create the proxy client key/certificate.  A suitable key/certificate file can
-   be generated using the following helper utility:
+1. Create the (development) API server proxy client key/certificate.  A suitable
+   key/certificate file can be generated using the following helper utility:
 
    ```bash
-   go run ./hack/genkey -client proxy-client
-   mv proxy-client.* secrets
+   go run ./hack/genkey -client apiserver-proxy-client
+   mv apiserver-proxy-client.* secrets
    ```
 
-1. Create the proxy ssh key/certificate.  A suitable key/certificate file can
-   be generated using the following helper utility:
+1. Create the (development) API server proxy ssh key/certificate.  A suitable
+   key/certificate file can be generated using the following helper utility:
 
    ```bash
-   ssh-keygen -f secrets/proxy_id_rsa -N ''
+   ssh-keygen -f secrets/apiserver-proxy_id_rsa -N ''
    ```
 
 1. Create an RP serving key/certificate.  A suitable key/certificate file
@@ -243,10 +244,10 @@ locations.
    ```
 
 1. Choose the proxy domain name label.  This final proxy hostname will be of the
-   form `vm0.$PROXY_DOMAIN_NAME_LABEL.$LOCATION.cloudapp.azure.com`.
+   form `vm0.$APISERVER_PROXY_DOMAIN_NAME_LABEL.$LOCATION.cloudapp.azure.com`.
 
    ```bash
-   PROXY_DOMAIN_NAME_LABEL=aroproxy
+   APISERVER_PROXY_DOMAIN_NAME_LABEL=aroproxy
    ```
 
 1. Create the secrets/env file:
@@ -263,7 +264,7 @@ locations.
    export AZURE_RP_CLIENT_ID='$AZURE_RP_CLIENT_ID'
    export AZURE_RP_CLIENT_SECRET='$AZURE_RP_CLIENT_SECRET'
    export RESOURCEGROUP="$RESOURCEGROUP_PREFIX-\$LOCATION"
-   export PROXY_HOSTNAME="vm0.$PROXY_DOMAIN_NAME_LABEL.\$LOCATION.cloudapp.azure.com"
+   export APISERVER_PROXY_HOSTNAME="vm0.$APISERVER_PROXY_DOMAIN_NAME_LABEL.\$LOCATION.cloudapp.azure.com"
    export DATABASE_NAME="\$USER"
    export RP_MODE='development'
    export PULL_SECRET='$PULL_SECRET'

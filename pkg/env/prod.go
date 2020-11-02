@@ -18,7 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/Azure/ARO-RP/pkg/deploy/generator"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/compute"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/dns"
 	"github.com/Azure/ARO-RP/pkg/util/clientauthorizer"
@@ -29,7 +29,7 @@ import (
 
 type prod struct {
 	Core
-	proxy.Dialer
+	apiserverproxy.Dialer
 
 	armClientAuthorizer   clientauthorizer.ClientAuthorizer
 	adminClientAuthorizer clientauthorizer.ClientAuthorizer
@@ -57,7 +57,7 @@ func newProd(ctx context.Context, log *logrus.Entry) (*prod, error) {
 		return nil, err
 	}
 
-	dialer, err := proxy.NewDialer(core.DeploymentMode())
+	dialer, err := apiserverproxy.NewDialer(core.DeploymentMode())
 	if err != nil {
 		return nil, err
 	}

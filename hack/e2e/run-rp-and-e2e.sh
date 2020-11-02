@@ -106,7 +106,7 @@ echo "ARO_RESOURCEGROUP=$ARO_RESOURCEGROUP"
 if [ "$RP_MODE" = "development" ]
 then
     echo
-    echo "PROXY_HOSTNAME=$PROXY_HOSTNAME"
+    echo "APISERVER_PROXY_HOSTNAME=$APISERVER_PROXY_HOSTNAME"
 fi
 echo "######################################"
 
@@ -114,7 +114,7 @@ echo "######################################"
 if [ "$RP_MODE" = "development" ]
 then
     [ "$RESOURCEGROUP" ] || ( echo ">> RESOURCEGROUP is not set; please validate your ./secrets/env"; exit 128 )
-    [ "$PROXY_HOSTNAME" ] || ( echo ">> PROXY_HOSTNAME is not set; please validate your ./secrets/env"; exit 128 )
+    [ "$APISERVER_PROXY_HOSTNAME" ] || ( echo ">> APISERVER_PROXY_HOSTNAME is not set; please validate your ./secrets/env"; exit 128 )
     [ "$COSMOSDB_ACCOUNT" ] || ( echo ">> COSMOSDB_ACCOUNT is not set; please validate your ./secrets/env"; exit 128 )
     [ "$DATABASE_NAME" ] || ( echo ">> DATABASE_NAME is not set; please validate your ./secrets/env"; exit 128 )
 fi

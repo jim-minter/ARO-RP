@@ -42,7 +42,7 @@ func newDev(ctx context.Context, log *logrus.Entry) (*dev, error) {
 		"AZURE_ARM_CLIENT_ID",
 		"AZURE_ARM_CLIENT_SECRET",
 		"AZURE_FP_CLIENT_ID",
-		"PROXY_HOSTNAME",
+		"APISERVER_PROXY_HOSTNAME",
 	} {
 		if _, found := os.LookupEnv(key); !found {
 			return nil, fmt.Errorf("environment variable %q unset", key)

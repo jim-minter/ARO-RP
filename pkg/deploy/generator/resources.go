@@ -127,12 +127,12 @@ func (g *generator) securityGroupPE() *arm.Resource {
 	}
 }
 
-func (g *generator) proxyVmss() *arm.Resource {
+func (g *generator) apiserverProxyVmss() *arm.Resource {
 	parts := []string{
 		fmt.Sprintf("base64ToString('%s')", base64.StdEncoding.EncodeToString([]byte("set -ex\n\n"))),
 	}
 
-	for _, variable := range []string{"proxyImage", "proxyImageAuth"} {
+	for _, variable := range []string{"apiserverProxyImage", "apiserverProxyImageAuth"} {
 		parts = append(parts,
 			fmt.Sprintf("'%s=$(base64 -d <<<'''", strings.ToUpper(variable)),
 			fmt.Sprintf("base64(parameters('%s'))", variable),
@@ -140,7 +140,7 @@ func (g *generator) proxyVmss() *arm.Resource {
 		)
 	}
 
-	for _, variable := range []string{"proxyCert", "proxyClientCert", "proxyKey"} {
+	for _, variable := range []string{"apiserverProxyCert", "apiserverProxyClientCert", "apiserverProxyKey"} {
 		parts = append(parts,
 			fmt.Sprintf("'%s='''", strings.ToUpper(variable)),
 			fmt.Sprintf("parameters('%s')", variable),
@@ -157,35 +157,35 @@ mkdir /root/.docker
 cat >/root/.docker/config.json <<EOF
 {
 	"auths": {
-		"${PROXYIMAGE%%/*}": {
-			"auth": "$PROXYIMAGEAUTH"
+		"${APISERVERPROXYIMAGE%%/*}": {
+			"auth": "$APISERVERPROXYIMAGEAUTH"
 		}
 	}
 }
 EOF
 systemctl start docker.service
-docker pull "$PROXYIMAGE"
+docker pull "$APISERVERPROXYIMAGE"
 
-mkdir /etc/proxy
-base64 -d <<<"$PROXYCERT" >/etc/proxy/proxy.crt
-base64 -d <<<"$PROXYKEY" >/etc/proxy/proxy.key
-base64 -d <<<"$PROXYCLIENTCERT" >/etc/proxy/proxy-client.crt
-chown -R 1000:1000 /etc/proxy
-chmod 0600 /etc/proxy/proxy.key
+mkdir /etc/apiserver-proxy
+base64 -d <<<"$APISERVERPROXYCERT" >/etc/apiserver-proxy/apiserver-proxy.crt
+base64 -d <<<"$APISERVERPROXYKEY" >/etc/apiserver-proxy/apiserver-proxy.key
+base64 -d <<<"$APISERVERPROXYCLIENTCERT" >/etc/apiserver-proxy/apiserver-proxy-client.crt
+chown -R 1000:1000 /etc/apiserver-proxy
+chmod 0600 /etc/apiserver-proxy/apiserver-proxy.key
 
-cat >/etc/sysconfig/proxy <<EOF
-PROXY_IMAGE='$PROXYIMAGE'
+cat >/etc/sysconfig/apiserver-proxy <<EOF
+APISERVER_PROXY_IMAGE='$APISERVERPROXYIMAGE'
 EOF
 
-cat >/etc/systemd/system/proxy.service <<'EOF'
+cat >/etc/systemd/system/apiserver-proxy.service <<'EOF'
 [Unit]
 After=docker.service
 Requires=docker.service
 
 [Service]
-EnvironmentFile=/etc/sysconfig/proxy
+EnvironmentFile=/etc/sysconfig/apiserver-proxy
 ExecStartPre=-/usr/bin/docker rm -f %n
-ExecStart=/usr/bin/docker run --rm --name %n -p 443:8443 -v /etc/proxy:/secrets $PROXY_IMAGE
+ExecStart=/usr/bin/docker run --rm --name %n -p 443:8443 -v /etc/apiserver-proxy:/secrets $APISERVER_PROXY_IMAGE
 ExecStop=/usr/bin/docker stop %n
 Restart=always
 RestartSec=1
@@ -195,7 +195,7 @@ StartLimitInterval=0
 WantedBy=multi-user.target
 EOF
 
-systemctl enable proxy.service
+systemctl enable apiserver-proxy.service
 
 (sleep 30; reboot) &
 `))
@@ -225,7 +225,7 @@ systemctl enable proxy.service
 								PublicKeys: &[]mgmtcompute.SSHPublicKey{
 									{
 										Path:    to.StringPtr("/home/cloud-user/.ssh/authorized_keys"),
-										KeyData: to.StringPtr("[parameters('sshPublicKey')]"),
+										KeyData: to.StringPtr("[parameters('apiserverProxySSHPublicKey')]"),
 									},
 								},
 							},
@@ -248,22 +248,22 @@ systemctl enable proxy.service
 					NetworkProfile: &mgmtcompute.VirtualMachineScaleSetNetworkProfile{
 						NetworkInterfaceConfigurations: &[]mgmtcompute.VirtualMachineScaleSetNetworkConfiguration{
 							{
-								Name: to.StringPtr("dev-proxy-vmss-nic"),
+								Name: to.StringPtr("dev-apiserverproxy-vmss-nic"),
 								VirtualMachineScaleSetNetworkConfigurationProperties: &mgmtcompute.VirtualMachineScaleSetNetworkConfigurationProperties{
 									Primary: to.BoolPtr(true),
 									IPConfigurations: &[]mgmtcompute.VirtualMachineScaleSetIPConfiguration{
 										{
-											Name: to.StringPtr("dev-proxy-vmss-ipconfig"),
+											Name: to.StringPtr("dev-apiserverproxy-vmss-ipconfig"),
 											VirtualMachineScaleSetIPConfigurationProperties: &mgmtcompute.VirtualMachineScaleSetIPConfigurationProperties{
 												Subnet: &mgmtcompute.APIEntityReference{
 													ID: to.StringPtr("[resourceId('Microsoft.Network/virtualNetworks/subnets', 'rp-vnet', 'rp-subnet')]"),
 												},
 												Primary: to.BoolPtr(true),
 												PublicIPAddressConfiguration: &mgmtcompute.VirtualMachineScaleSetPublicIPAddressConfiguration{
-													Name: to.StringPtr("dev-proxy-vmss-pip"),
+													Name: to.StringPtr("dev-apiserverproxy-vmss-pip"),
 													VirtualMachineScaleSetPublicIPAddressConfigurationProperties: &mgmtcompute.VirtualMachineScaleSetPublicIPAddressConfigurationProperties{
 														DNSSettings: &mgmtcompute.VirtualMachineScaleSetPublicIPAddressConfigurationDNSSettings{
-															DomainNameLabel: to.StringPtr("[parameters('proxyDomainNameLabel')]"),
+															DomainNameLabel: to.StringPtr("[parameters('apiserverProxyDomainNameLabel')]"),
 														},
 													},
 												},
@@ -277,7 +277,7 @@ systemctl enable proxy.service
 					ExtensionProfile: &mgmtcompute.VirtualMachineScaleSetExtensionProfile{
 						Extensions: &[]mgmtcompute.VirtualMachineScaleSetExtension{
 							{
-								Name: to.StringPtr("dev-proxy-vmss-cse"),
+								Name: to.StringPtr("dev-apiserverproxy-vmss-cse"),
 								VirtualMachineScaleSetExtensionProperties: &mgmtcompute.VirtualMachineScaleSetExtensionProperties{
 									Publisher:               to.StringPtr("Microsoft.Azure.Extensions"),
 									Type:                    to.StringPtr("CustomScript"),
@@ -294,7 +294,7 @@ systemctl enable proxy.service
 				},
 				Overprovision: to.BoolPtr(false),
 			},
-			Name:     to.StringPtr("dev-proxy-vmss"),
+			Name:     to.StringPtr("dev-apiserverproxy-vmss"),
 			Type:     to.StringPtr("Microsoft.Compute/virtualMachineScaleSets"),
 			Location: to.StringPtr("[resourceGroup().location]"),
 		},

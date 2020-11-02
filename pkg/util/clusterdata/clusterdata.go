@@ -14,7 +14,7 @@ import (
 
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/metrics"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	"github.com/Azure/ARO-RP/pkg/util/recover"
 	"github.com/Azure/ARO-RP/pkg/util/restconfig"
 )
@@ -33,7 +33,7 @@ type enricherTask interface {
 
 // NewBestEffortEnricher returns an enricher that attempts to populate
 // fields, but ignores errors in case of failures
-func NewBestEffortEnricher(log *logrus.Entry, dialer proxy.Dialer, m metrics.Interface) OpenShiftClusterEnricher {
+func NewBestEffortEnricher(log *logrus.Entry, dialer apiserverproxy.Dialer, m metrics.Interface) OpenShiftClusterEnricher {
 	return &bestEffortEnricher{
 		log:    log,
 		dialer: dialer,
@@ -49,10 +49,10 @@ func NewBestEffortEnricher(log *logrus.Entry, dialer proxy.Dialer, m metrics.Int
 
 type bestEffortEnricher struct {
 	log    *logrus.Entry
-	dialer proxy.Dialer
+	dialer apiserverproxy.Dialer
 	m      metrics.Interface
 
-	restConfig       func(dialer proxy.Dialer, oc *api.OpenShiftCluster) (*rest.Config, error)
+	restConfig       func(dialer apiserverproxy.Dialer, oc *api.OpenShiftCluster) (*rest.Config, error)
 	taskConstructors []enricherTaskConstructor
 }
 

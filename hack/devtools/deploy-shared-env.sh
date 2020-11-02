@@ -43,13 +43,13 @@ deploy_env_dev() {
             "ciCapacity=6" \
             "ciDeployTooling=true" \
             "ciPoolName=ARO-CI" \
-            "proxyCert=$(base64 -w0 <secrets/proxy.crt)" \
-            "proxyClientCert=$(base64 -w0 <secrets/proxy-client.crt)" \
-            "proxyDomainNameLabel=$(cut -d. -f2 <<<$PROXY_HOSTNAME)" \
-            "proxyImage=arointsvc.azurecr.io/proxy:latest" \
-            "proxyImageAuth=$(jq -r '.auths["arointsvc.azurecr.io"].auth' <<<$PULL_SECRET)" \
-            "proxyKey=$(base64 -w0 <secrets/proxy.key)" \
-            "sshPublicKey=$(<secrets/proxy_id_rsa.pub)" \
+            "apiserverProxyCert=$(base64 -w0 <secrets/apiserver-proxy.crt)" \
+            "apiserverProxyClientCert=$(base64 -w0 <secrets/apiserver-proxy-client.crt)" \
+            "apiserverProxyDomainNameLabel=$(cut -d. -f2 <<<$APISERVER_PROXY_HOSTNAME)" \
+            "apiserverProxyImage=arointsvc.azurecr.io/proxy:latest" \
+            "apiserverProxyImageAuth=$(jq -r '.auths["arointsvc.azurecr.io"].auth' <<<$PULL_SECRET)" \
+            "apiserverProxyKey=$(base64 -w0 <secrets/apiserver-proxy.key)" \
+            "apiserverProxySSHPublicKey=$(<secrets/apiserver-proxy_id_rsa.pub)" \
             "vpnCACertificate=$(base64 -w0 <secrets/vpn-ca.crt)" >/dev/null
 }
 
@@ -64,13 +64,13 @@ deploy_env_dev_override() {
             "ciCapacity=3" \
             "ciDeployTooling=true" \
             "ciPoolName=ARO-CI" \
-            "proxyCert=$(base64 -w0 <secrets/proxy.crt)" \
-            "proxyClientCert=$(base64 -w0 <secrets/proxy-client.crt)" \
-            "proxyDomainNameLabel=$(cut -d. -f2 <<<$PROXY_HOSTNAME)" \
-            "proxyImage=arointsvc.azurecr.io/proxy:latest" \
-            "proxyImageAuth=$(jq -r '.auths["arointsvc.azurecr.io"].auth' <<<$PULL_SECRET)" \
-            "proxyKey=$(base64 -w0 <secrets/proxy.key)" \
-            "sshPublicKey=$(<secrets/proxy_id_rsa.pub)" \
+            "apiserverProxyCert=$(base64 -w0 <secrets/apiserver-proxy.crt)" \
+            "apiserverProxyClientCert=$(base64 -w0 <secrets/apiserver-proxy-client.crt)" \
+            "apiserverProxyDomainNameLabel=$(cut -d. -f2 <<<$APISERVER_PROXY_HOSTNAME)" \
+            "apiserverProxyImage=arointsvc.azurecr.io/proxy:latest" \
+            "apiserverProxyImageAuth=$(jq -r '.auths["arointsvc.azurecr.io"].auth' <<<$PULL_SECRET)" \
+            "apiserverProxyKey=$(base64 -w0 <secrets/apiserver-proxy.key)" \
+            "apiserverProxySSHPublicKey=$(<secrets/apiserver-proxy_id_rsa.pub)" \
             "vpnCACertificate=$(base64 -w0 <secrets/vpn-ca.crt)" \
             "publicIPAddressSkuName=Basic" \
             "publicIPAddressAllocationMethod=Dynamic" >/dev/null
@@ -188,12 +188,12 @@ echo "PARENT_DOMAIN_RESOURCEGROUP=$PARENT_DOMAIN_RESOURCEGROUP"
 echo
 echo "KEYVAULT_PREFIX=$KEYVAULT_PREFIX"
 echo
-echo "PROXY_HOSTNAME=$PROXY_HOSTNAME"
+echo "APISERVER_PROXY_HOSTNAME=$APISERVER_PROXY_HOSTNAME"
 echo "######################################"
 
 [ "$LOCATION" ] || ( echo ">> LOCATION is not set please validate your ./secrets/env"; exit 128 )
 [ "$RESOURCEGROUP" ] || ( echo ">> RESOURCEGROUP is not set please validate your ./secrets/env"; exit 128 )
-[ "$PROXY_HOSTNAME" ] || ( echo ">> PROXY_HOSTNAME is not set please validate your ./secrets/env"; exit 128 )
+[ "$APISERVER_PROXY_HOSTNAME" ] || ( echo ">> APISERVER_PROXY_HOSTNAME is not set please validate your ./secrets/env"; exit 128 )
 [ "$COSMOSDB_ACCOUNT" ] || ( echo ">> COSMOSDB_ACCOUNT is not set please validate your ./secrets/env"; exit 128 )
 [ "$ADMIN_OBJECT_ID" ] || ( echo ">> ADMIN_OBJECT_ID is not set please validate your ./secrets/env"; exit 128 )
 [ "$DOMAIN_NAME" ] || ( echo ">> DOMAIN_NAME is not set please validate your ./secrets/env"; exit 128 )

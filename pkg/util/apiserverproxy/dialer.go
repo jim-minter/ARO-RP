@@ -1,4 +1,4 @@
-package proxy
+package apiserverproxy
 
 // Copyright (c) Microsoft Corporation.
 // Licensed under the Apache License 2.0.
@@ -58,7 +58,7 @@ func (d *dev) DialContext(ctx context.Context, network, address string) (net.Con
 	c, err := (&net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
-	}).DialContext(ctx, network, os.Getenv("PROXY_HOSTNAME")+":443")
+	}).DialContext(ctx, network, os.Getenv("APISERVER_PROXY_HOSTNAME")+":443")
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (d *dev) DialContext(ctx context.Context, network, address string) (net.Con
 				PrivateKey: d.proxyClientKey,
 			},
 		},
-		ServerName: "proxy",
+		ServerName: "apiserver-proxy",
 	})
 
 	err = c.(*tls.Conn).Handshake()
@@ -124,25 +124,25 @@ func NewDialer(deploymentMode deployment.Mode) (Dialer, error) {
 		return nil, err
 	}
 
-	b, err := ioutil.ReadFile(path.Join(basepath, "secrets/proxy.crt"))
+	b, err := ioutil.ReadFile(path.Join(basepath, "secrets/apiserver-proxy.crt"))
 	if err != nil {
 		return nil, err
 	}
 
-	cert, err := x509.ParseCertificate(b)
+	proxyCert, err := x509.ParseCertificate(b)
 	if err != nil {
 		return nil, err
 	}
 
 	d.proxyPool = x509.NewCertPool()
-	d.proxyPool.AddCert(cert)
+	d.proxyPool.AddCert(proxyCert)
 
-	d.proxyClientCert, err = ioutil.ReadFile(path.Join(basepath, "secrets/proxy-client.crt"))
+	d.proxyClientCert, err = ioutil.ReadFile(path.Join(basepath, "secrets/apiserver-proxy-client.crt"))
 	if err != nil {
 		return nil, err
 	}
 
-	b, err = ioutil.ReadFile(path.Join(basepath, "secrets/proxy-client.key"))
+	b, err = ioutil.ReadFile(path.Join(basepath, "secrets/apiserver-proxy-client.key"))
 	if err != nil {
 		return nil, err
 	}

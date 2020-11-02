@@ -12,11 +12,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/Azure/ARO-RP/pkg/api"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 )
 
 // DialContext returns a connection to the specified cluster/namespace/pod/port.
-func DialContext(ctx context.Context, log *logrus.Entry, dialer proxy.Dialer, oc *api.OpenShiftCluster, namespace, pod, port string) (net.Conn, error) {
+func DialContext(ctx context.Context, log *logrus.Entry, dialer apiserverproxy.Dialer, oc *api.OpenShiftCluster, namespace, pod, port string) (net.Conn, error) {
 	spdyConn, err := dialSpdy(ctx, dialer, oc, "/api/v1/namespaces/"+namespace+"/pods/"+pod+"/portforward")
 	if err != nil {
 		return nil, err

@@ -11,7 +11,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	"github.com/Azure/ARO-RP/pkg/util/clientauthorizer"
 	"github.com/Azure/ARO-RP/pkg/util/deployment"
 	"github.com/Azure/ARO-RP/pkg/util/refreshable"
@@ -29,7 +29,7 @@ const (
 
 type Interface interface {
 	Core
-	proxy.Dialer
+	apiserverproxy.Dialer
 
 	InitializeAuthorizers() error
 	ArmClientAuthorizer() clientauthorizer.ClientAuthorizer

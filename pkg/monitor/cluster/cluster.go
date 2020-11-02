@@ -21,12 +21,12 @@ import (
 	"github.com/Azure/ARO-RP/pkg/api"
 	"github.com/Azure/ARO-RP/pkg/metrics"
 	aroclient "github.com/Azure/ARO-RP/pkg/operator/clientset/versioned/typed/aro.openshift.io/v1alpha1"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	"github.com/Azure/ARO-RP/pkg/util/restconfig"
 )
 
 type Monitor struct {
-	dialer    proxy.Dialer
+	dialer    apiserverproxy.Dialer
 	log       *logrus.Entry
 	hourlyRun bool
 
@@ -48,7 +48,7 @@ type Monitor struct {
 	}
 }
 
-func NewMonitor(ctx context.Context, dialer proxy.Dialer, log *logrus.Entry, oc *api.OpenShiftCluster, m metrics.Interface, hourlyRun bool) (*Monitor, error) {
+func NewMonitor(ctx context.Context, dialer apiserverproxy.Dialer, log *logrus.Entry, oc *api.OpenShiftCluster, m metrics.Interface, hourlyRun bool) (*Monitor, error) {
 	r, err := azure.ParseResourceID(oc.ID)
 	if err != nil {
 		return nil, err

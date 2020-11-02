@@ -1,4 +1,4 @@
-package proxy
+package apiserverproxy
 
 // Copyright (c) Microsoft Corporation.
 // Licensed under the Apache License 2.0.
@@ -30,15 +30,15 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	clientCert, err := x509.ParseCertificate(b)
+	proxyClientCert, err := x509.ParseCertificate(b)
 	if err != nil {
 		return err
 	}
 
 	pool := x509.NewCertPool()
-	pool.AddCert(clientCert)
+	pool.AddCert(proxyClientCert)
 
-	cert, err := ioutil.ReadFile(s.CertFile)
+	proxyCert, err := ioutil.ReadFile(s.CertFile)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	key, err := x509.ParsePKCS1PrivateKey(b)
+	proxyKey, err := x509.ParsePKCS1PrivateKey(b)
 	if err != nil {
 		return err
 	}
@@ -57,9 +57,9 @@ func (s *Server) Run() error {
 		Certificates: []tls.Certificate{
 			{
 				Certificate: [][]byte{
-					cert,
+					proxyCert,
 				},
-				PrivateKey: key,
+				PrivateKey: proxyKey,
 			},
 		},
 		ClientCAs:  pool,

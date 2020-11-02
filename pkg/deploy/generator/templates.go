@@ -352,34 +352,34 @@ func (g *generator) sharedDevelopmentEnvTemplate() *arm.Template {
 		g.devVnet(),
 		g.devVPN(),
 		g.devCIPool(),
-		g.proxyVmss())
+		g.apiserverProxyVmss())
 
 	for _, param := range []string{
+		"apiserverProxyCert",
+		"apiserverProxyClientCert",
+		"apiserverProxyDomainNameLabel",
+		"apiserverProxyImage",
+		"apiserverProxyImageAuth",
+		"apiserverProxyKey",
+		"apiserverProxySSHPublicKey",
 		"ciAzpToken",
 		"ciCapacity",
-		"ciPoolName",
 		"ciDeployTooling",
-		"proxyCert",
-		"proxyClientCert",
-		"proxyDomainNameLabel",
-		"proxyImage",
-		"proxyImageAuth",
-		"proxyKey",
+		"ciPoolName",
 		"publicIPAddressAllocationMethod",
 		"publicIPAddressSkuName",
-		"sshPublicKey",
 		"vpnCACertificate",
 	} {
 		typ := "string"
 		var defaultValue interface{}
 		switch param {
+		case "apiserverProxyImageAuth", "apiserverProxyKey":
+			typ = "securestring"
+		case "ciCapacity":
+			typ = "int"
 		case "ciDeployTooling":
 			typ = "bool"
 			defaultValue = false
-		case "ciCapacity":
-			typ = "int"
-		case "proxyImageAuth", "proxyKey":
-			typ = "securestring"
 		case "publicIPAddressAllocationMethod":
 			defaultValue = "Static"
 		case "publicIPAddressSkuName":

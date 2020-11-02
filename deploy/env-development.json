@@ -2,6 +2,27 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "apiserverProxyCert": {
+            "type": "string"
+        },
+        "apiserverProxyClientCert": {
+            "type": "string"
+        },
+        "apiserverProxyDomainNameLabel": {
+            "type": "string"
+        },
+        "apiserverProxyImage": {
+            "type": "string"
+        },
+        "apiserverProxyImageAuth": {
+            "type": "securestring"
+        },
+        "apiserverProxyKey": {
+            "type": "securestring"
+        },
+        "apiserverProxySSHPublicKey": {
+            "type": "string"
+        },
         "ciAzpToken": {
             "type": "string"
         },
@@ -15,24 +36,6 @@
         "ciPoolName": {
             "type": "string"
         },
-        "proxyCert": {
-            "type": "string"
-        },
-        "proxyClientCert": {
-            "type": "string"
-        },
-        "proxyDomainNameLabel": {
-            "type": "string"
-        },
-        "proxyImage": {
-            "type": "string"
-        },
-        "proxyImageAuth": {
-            "type": "securestring"
-        },
-        "proxyKey": {
-            "type": "securestring"
-        },
         "publicIPAddressAllocationMethod": {
             "type": "string",
             "defaultValue": "Static"
@@ -40,9 +43,6 @@
         "publicIPAddressSkuName": {
             "type": "string",
             "defaultValue": "Standard"
-        },
-        "sshPublicKey": {
-            "type": "string"
         },
         "vpnCACertificate": {
             "type": "string"
@@ -258,7 +258,7 @@
                                 "publicKeys": [
                                     {
                                         "path": "/home/cloud-user/.ssh/authorized_keys",
-                                        "keyData": "[parameters('sshPublicKey')]"
+                                        "keyData": "[parameters('apiserverProxySSHPublicKey')]"
                                     }
                                 ]
                             }
@@ -281,22 +281,22 @@
                     "networkProfile": {
                         "networkInterfaceConfigurations": [
                             {
-                                "name": "dev-proxy-vmss-nic",
+                                "name": "dev-apiserverproxy-vmss-nic",
                                 "properties": {
                                     "primary": true,
                                     "ipConfigurations": [
                                         {
-                                            "name": "dev-proxy-vmss-ipconfig",
+                                            "name": "dev-apiserverproxy-vmss-ipconfig",
                                             "properties": {
                                                 "subnet": {
                                                     "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'rp-vnet', 'rp-subnet')]"
                                                 },
                                                 "primary": true,
                                                 "publicIPAddressConfiguration": {
-                                                    "name": "dev-proxy-vmss-pip",
+                                                    "name": "dev-apiserverproxy-vmss-pip",
                                                     "properties": {
                                                         "dnsSettings": {
-                                                            "domainNameLabel": "[parameters('proxyDomainNameLabel')]"
+                                                            "domainNameLabel": "[parameters('apiserverProxyDomainNameLabel')]"
                                                         }
                                                     }
                                                 }
@@ -310,7 +310,7 @@
                     "extensionProfile": {
                         "extensions": [
                             {
-                                "name": "dev-proxy-vmss-cse",
+                                "name": "dev-apiserverproxy-vmss-cse",
                                 "properties": {
                                     "publisher": "Microsoft.Azure.Extensions",
                                     "type": "CustomScript",
@@ -318,7 +318,7 @@
                                     "autoUpgradeMinorVersion": true,
                                     "settings": {},
                                     "protectedSettings": {
-                                        "script": "[base64(concat(base64ToString('c2V0IC1leAoK'),'PROXYIMAGE=$(base64 -d \u003c\u003c\u003c''',base64(parameters('proxyImage')),''')\n','PROXYIMAGEAUTH=$(base64 -d \u003c\u003c\u003c''',base64(parameters('proxyImageAuth')),''')\n','PROXYCERT=''',parameters('proxyCert'),'''\n','PROXYCLIENTCERT=''',parameters('proxyClientCert'),'''\n','PROXYKEY=''',parameters('proxyKey'),'''\n','\n',base64ToString('eXVtIC15IHVwZGF0ZSAteCBXQUxpbnV4QWdlbnQKeXVtIC15IGluc3RhbGwgZG9ja2VyCgpmaXJld2FsbC1jbWQgLS1hZGQtcG9ydD00NDMvdGNwIC0tcGVybWFuZW50Cgpta2RpciAvcm9vdC8uZG9ja2VyCmNhdCA+L3Jvb3QvLmRvY2tlci9jb25maWcuanNvbiA8PEVPRgp7CgkiYXV0aHMiOiB7CgkJIiR7UFJPWFlJTUFHRSUlLyp9IjogewoJCQkiYXV0aCI6ICIkUFJPWFlJTUFHRUFVVEgiCgkJfQoJfQp9CkVPRgpzeXN0ZW1jdGwgc3RhcnQgZG9ja2VyLnNlcnZpY2UKZG9ja2VyIHB1bGwgIiRQUk9YWUlNQUdFIgoKbWtkaXIgL2V0Yy9wcm94eQpiYXNlNjQgLWQgPDw8IiRQUk9YWUNFUlQiID4vZXRjL3Byb3h5L3Byb3h5LmNydApiYXNlNjQgLWQgPDw8IiRQUk9YWUtFWSIgPi9ldGMvcHJveHkvcHJveHkua2V5CmJhc2U2NCAtZCA8PDwiJFBST1hZQ0xJRU5UQ0VSVCIgPi9ldGMvcHJveHkvcHJveHktY2xpZW50LmNydApjaG93biAtUiAxMDAwOjEwMDAgL2V0Yy9wcm94eQpjaG1vZCAwNjAwIC9ldGMvcHJveHkvcHJveHkua2V5CgpjYXQgPi9ldGMvc3lzY29uZmlnL3Byb3h5IDw8RU9GClBST1hZX0lNQUdFPSckUFJPWFlJTUFHRScKRU9GCgpjYXQgPi9ldGMvc3lzdGVtZC9zeXN0ZW0vcHJveHkuc2VydmljZSA8PCdFT0YnCltVbml0XQpBZnRlcj1kb2NrZXIuc2VydmljZQpSZXF1aXJlcz1kb2NrZXIuc2VydmljZQoKW1NlcnZpY2VdCkVudmlyb25tZW50RmlsZT0vZXRjL3N5c2NvbmZpZy9wcm94eQpFeGVjU3RhcnRQcmU9LS91c3IvYmluL2RvY2tlciBybSAtZiAlbgpFeGVjU3RhcnQ9L3Vzci9iaW4vZG9ja2VyIHJ1biAtLXJtIC0tbmFtZSAlbiAtcCA0NDM6ODQ0MyAtdiAvZXRjL3Byb3h5Oi9zZWNyZXRzICRQUk9YWV9JTUFHRQpFeGVjU3RvcD0vdXNyL2Jpbi9kb2NrZXIgc3RvcCAlbgpSZXN0YXJ0PWFsd2F5cwpSZXN0YXJ0U2VjPTEKU3RhcnRMaW1pdEludGVydmFsPTAKCltJbnN0YWxsXQpXYW50ZWRCeT1tdWx0aS11c2VyLnRhcmdldApFT0YKCnN5c3RlbWN0bCBlbmFibGUgcHJveHkuc2VydmljZQoKKHNsZWVwIDMwOyByZWJvb3QpICYK')))]"
+                                        "script": "[base64(concat(base64ToString('c2V0IC1leAoK'),'APISERVERPROXYIMAGE=$(base64 -d \u003c\u003c\u003c''',base64(parameters('apiserverProxyImage')),''')\n','APISERVERPROXYIMAGEAUTH=$(base64 -d \u003c\u003c\u003c''',base64(parameters('apiserverProxyImageAuth')),''')\n','APISERVERPROXYCERT=''',parameters('apiserverProxyCert'),'''\n','APISERVERPROXYCLIENTCERT=''',parameters('apiserverProxyClientCert'),'''\n','APISERVERPROXYKEY=''',parameters('apiserverProxyKey'),'''\n','\n',base64ToString('eXVtIC15IHVwZGF0ZSAteCBXQUxpbnV4QWdlbnQKeXVtIC15IGluc3RhbGwgZG9ja2VyCgpmaXJld2FsbC1jbWQgLS1hZGQtcG9ydD00NDMvdGNwIC0tcGVybWFuZW50Cgpta2RpciAvcm9vdC8uZG9ja2VyCmNhdCA+L3Jvb3QvLmRvY2tlci9jb25maWcuanNvbiA8PEVPRgp7CgkiYXV0aHMiOiB7CgkJIiR7QVBJU0VSVkVSUFJPWFlJTUFHRSUlLyp9IjogewoJCQkiYXV0aCI6ICIkQVBJU0VSVkVSUFJPWFlJTUFHRUFVVEgiCgkJfQoJfQp9CkVPRgpzeXN0ZW1jdGwgc3RhcnQgZG9ja2VyLnNlcnZpY2UKZG9ja2VyIHB1bGwgIiRBUElTRVJWRVJQUk9YWUlNQUdFIgoKbWtkaXIgL2V0Yy9hcGlzZXJ2ZXItcHJveHkKYmFzZTY0IC1kIDw8PCIkQVBJU0VSVkVSUFJPWFlDRVJUIiA+L2V0Yy9hcGlzZXJ2ZXItcHJveHkvYXBpc2VydmVyLXByb3h5LmNydApiYXNlNjQgLWQgPDw8IiRBUElTRVJWRVJQUk9YWUtFWSIgPi9ldGMvYXBpc2VydmVyLXByb3h5L2FwaXNlcnZlci1wcm94eS5rZXkKYmFzZTY0IC1kIDw8PCIkQVBJU0VSVkVSUFJPWFlDTElFTlRDRVJUIiA+L2V0Yy9hcGlzZXJ2ZXItcHJveHkvYXBpc2VydmVyLXByb3h5LWNsaWVudC5jcnQKY2hvd24gLVIgMTAwMDoxMDAwIC9ldGMvYXBpc2VydmVyLXByb3h5CmNobW9kIDA2MDAgL2V0Yy9hcGlzZXJ2ZXItcHJveHkvYXBpc2VydmVyLXByb3h5LmtleQoKY2F0ID4vZXRjL3N5c2NvbmZpZy9hcGlzZXJ2ZXItcHJveHkgPDxFT0YKQVBJU0VSVkVSX1BST1hZX0lNQUdFPSckQVBJU0VSVkVSUFJPWFlJTUFHRScKRU9GCgpjYXQgPi9ldGMvc3lzdGVtZC9zeXN0ZW0vYXBpc2VydmVyLXByb3h5LnNlcnZpY2UgPDwnRU9GJwpbVW5pdF0KQWZ0ZXI9ZG9ja2VyLnNlcnZpY2UKUmVxdWlyZXM9ZG9ja2VyLnNlcnZpY2UKCltTZXJ2aWNlXQpFbnZpcm9ubWVudEZpbGU9L2V0Yy9zeXNjb25maWcvYXBpc2VydmVyLXByb3h5CkV4ZWNTdGFydFByZT0tL3Vzci9iaW4vZG9ja2VyIHJtIC1mICVuCkV4ZWNTdGFydD0vdXNyL2Jpbi9kb2NrZXIgcnVuIC0tcm0gLS1uYW1lICVuIC1wIDQ0Mzo4NDQzIC12IC9ldGMvYXBpc2VydmVyLXByb3h5Oi9zZWNyZXRzICRBUElTRVJWRVJfUFJPWFlfSU1BR0UKRXhlY1N0b3A9L3Vzci9iaW4vZG9ja2VyIHN0b3AgJW4KUmVzdGFydD1hbHdheXMKUmVzdGFydFNlYz0xClN0YXJ0TGltaXRJbnRlcnZhbD0wCgpbSW5zdGFsbF0KV2FudGVkQnk9bXVsdGktdXNlci50YXJnZXQKRU9GCgpzeXN0ZW1jdGwgZW5hYmxlIGFwaXNlcnZlci1wcm94eS5zZXJ2aWNlCgooc2xlZXAgMzA7IHJlYm9vdCkgJgo=')))]"
                                     }
                                 }
                             }
@@ -327,7 +327,7 @@
                 },
                 "overprovision": false
             },
-            "name": "dev-proxy-vmss",
+            "name": "dev-apiserverproxy-vmss",
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "location": "[resourceGroup().location]",
             "apiVersion": "2019-03-01"

@@ -19,7 +19,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/metrics/statsd/azure"
 	"github.com/Azure/ARO-RP/pkg/metrics/statsd/k8s"
 	pkgmonitor "github.com/Azure/ARO-RP/pkg/monitor"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	"github.com/Azure/ARO-RP/pkg/util/deployment"
 	"github.com/Azure/ARO-RP/pkg/util/encryption"
 )
@@ -84,7 +84,7 @@ func monitor(ctx context.Context, log *logrus.Entry) error {
 		return err
 	}
 
-	dialer, err := proxy.NewDialer(_env.DeploymentMode())
+	dialer, err := apiserverproxy.NewDialer(_env.DeploymentMode())
 	if err != nil {
 		return err
 	}

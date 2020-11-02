@@ -13,12 +13,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/Azure/ARO-RP/pkg/api"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 )
 
 // ExecStdout executes a command in the given namespace/pod/container and
 // streams its stdout.
-func ExecStdout(ctx context.Context, log *logrus.Entry, dialer proxy.Dialer, oc *api.OpenShiftCluster, namespace, pod, container string, command []string) (io.ReadCloser, error) {
+func ExecStdout(ctx context.Context, log *logrus.Entry, dialer apiserverproxy.Dialer, oc *api.OpenShiftCluster, namespace, pod, container string, command []string) (io.ReadCloser, error) {
 	v := url.Values{
 		"container": []string{container},
 		"command":   command,

@@ -16,14 +16,14 @@ import (
 	"github.com/Azure/ARO-RP/pkg/database"
 	"github.com/Azure/ARO-RP/pkg/database/cosmosdb"
 	"github.com/Azure/ARO-RP/pkg/metrics"
-	"github.com/Azure/ARO-RP/pkg/proxy"
+	"github.com/Azure/ARO-RP/pkg/util/apiserverproxy"
 	"github.com/Azure/ARO-RP/pkg/util/bucket"
 	"github.com/Azure/ARO-RP/pkg/util/heartbeat"
 )
 
 type monitor struct {
 	baseLog *logrus.Entry
-	dialer  proxy.Dialer
+	dialer  apiserverproxy.Dialer
 
 	dbMonitors          database.Monitors
 	dbOpenShiftClusters database.OpenShiftClusters
@@ -48,7 +48,7 @@ type Runnable interface {
 	Run(context.Context) error
 }
 
-func NewMonitor(log *logrus.Entry, dialer proxy.Dialer, dbMonitors database.Monitors, dbOpenShiftClusters database.OpenShiftClusters, dbSubscriptions database.Subscriptions, m, clusterm metrics.Interface) Runnable {
+func NewMonitor(log *logrus.Entry, dialer apiserverproxy.Dialer, dbMonitors database.Monitors, dbOpenShiftClusters database.OpenShiftClusters, dbSubscriptions database.Subscriptions, m, clusterm metrics.Interface) Runnable {
 	return &monitor{
 		baseLog: log,
 		dialer:  dialer,
