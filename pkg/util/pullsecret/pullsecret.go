@@ -132,3 +132,29 @@ func Build(oc *api.OpenShiftCluster, ps string) (string, error) {
 
 	return pullSecret, nil
 }
+
+func Authorization(hostname string) (string, error) {
+	_ps := os.Getenv("PULL_SECRET")
+	if _ps == "" {
+		_ps = "{}"
+	}
+
+	var ps *pullSecret
+
+	err := json.Unmarshal([]byte(_ps), &ps)
+	if err != nil {
+		return "", err
+	}
+
+	hostconfig, ok := ps.Auths[hostname]
+	if !ok {
+		return "", nil
+	}
+
+	auth, ok := hostconfig["auth"].(string)
+	if !ok {
+		return "", nil
+	}
+
+	return auth, nil
+}

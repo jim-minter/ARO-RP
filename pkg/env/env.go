@@ -25,6 +25,7 @@ const (
 	FrontendEncryptionSecretName = "fe-encryption-key"
 	RPLoggingSecretName          = "rp-mdsd"
 	RPMonitoringSecretName       = "rp-mdm"
+	ProxyServerSecretName        = "proxy-server"
 )
 
 type Interface interface {

@@ -46,21 +46,24 @@ func main() {
 
 	var err error
 	switch strings.ToLower(flag.Arg(0)) {
+	case "deploy":
+		checkArgs(3)
+		err = deploy(ctx, log)
 	case "mirror":
 		checkArgs(1)
 		err = mirror(ctx, log)
 	case "monitor":
 		checkArgs(1)
 		err = monitor(ctx, log)
-	case "rp":
-		checkArgs(1)
-		err = rp(ctx, log)
-	case "deploy":
-		checkArgs(3)
-		err = deploy(ctx, log)
 	case "operator":
 		checkArgs(2)
 		err = operator(ctx, log)
+	case "proxy":
+		checkArgs(1)
+		err = proxy(ctx, log)
+	case "rp":
+		checkArgs(1)
+		err = rp(ctx, log)
 	default:
 		usage()
 		os.Exit(2)

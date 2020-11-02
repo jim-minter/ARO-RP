@@ -1,0 +1,40 @@
+rp architecture:
+- rg
+- storage account(s)
+- vnet
+- cosmos firewall
+- managed identity
+- vmss (refactor cse)
+- lb
+- pls (scalable)
+* kusto (configuration - scalability?)
+
+rp:
+- az: remove acr private service
+- cluster vnet validation
+- cluster vnet creation
+- deprecate acr token codebase
+- upgrades
+
+cluster:
+- create certificate
+- create pe
+- link pe/pls
+* configure cri-o
+* configure logging
+* configure prometheus (via operator in short term?)
+
+proxy:
+- acr and kusto login with MI
+- database + cert validation
+- metrics
+
+openshift:
+- research dns config hosts
+
+prometheus:
+* kusto front end
+
+other:
+- sizings
+- compliance (e.g. GDPR)
