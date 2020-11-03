@@ -28,6 +28,7 @@ import (
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/network"
 	"github.com/Azure/ARO-RP/pkg/util/azureclient/mgmt/redhatopenshift"
 	"github.com/Azure/ARO-RP/pkg/util/deployment"
+	"github.com/Azure/ARO-RP/pkg/util/errors"
 	"github.com/Azure/ARO-RP/pkg/util/instancemetadata"
 )
 
@@ -44,19 +45,6 @@ type Cluster struct {
 	openshiftclusters redhatopenshift.OpenShiftClustersClient
 	securitygroups    network.SecurityGroupsClient
 	subnets           network.SubnetsClient
-}
-
-type errors []error
-
-func (errs errors) Error() string {
-	var sb strings.Builder
-
-	for _, err := range errs {
-		sb.WriteString(err.Error())
-		sb.WriteByte('\n')
-	}
-
-	return sb.String()
 }
 
 func New(log *logrus.Entry, deploymentMode deployment.Mode, instancemetadata instancemetadata.InstanceMetadata, ci bool) (*Cluster, error) {
@@ -188,7 +176,7 @@ func (c *Cluster) Create(ctx context.Context, clusterName string) error {
 }
 
 func (c *Cluster) Delete(ctx context.Context, clusterName string) error {
-	var errs errors
+	var errs errors.Errors
 
 	oc, err := c.openshiftclusters.Get(ctx, c.ResourceGroup(), clusterName)
 	if err == nil {
@@ -219,11 +207,7 @@ func (c *Cluster) Delete(ctx context.Context, clusterName string) error {
 
 	c.log.Info("done")
 
-	if errs != nil {
-		return errs // https://golang.org/doc/faq#nil_error
-	}
-
-	return nil
+	return errs.AsError()
 }
 
 func (c *Cluster) createCluster(ctx context.Context, clusterName, clientID, clientSecret string) error {
