@@ -51,11 +51,6 @@ deploy_e2e_db() {
 
 }
 
-set_cli_context() {
-    echo "########## Setting az cli context ##########"
-    az account set -s $AZURE_SUBSCRIPTION_ID
-}
-
 register_sub() {
     echo "########## 🔑 Registering subscription ##########"
     curl -sko /dev/null -X PUT \
@@ -63,19 +58,6 @@ register_sub() {
       -d '{"state": "Registered", "properties": {"tenantId": "'"$AZURE_TENANT_ID"'"}}' \
       "https://localhost:8443/subscriptions/$AZURE_SUBSCRIPTION_ID?api-version=2.0"
 }
-
-get_e2e_image_version(){
-    curl -s -w "\n%{http_code}" "https://${ARO_VERSION_SA}.blob.core.windows.net/rpversion/${LOCATION}" | {
-    read body
-    read code
-    if [[ $code == "200" ]]; then
-        echo $body
-    else
-        echo "latest"
-    fi
-    }
-}
-
 
 clean_e2e_db(){
     echo "########## 🧹 Deleting DB $DATABASE_NAME ##########"

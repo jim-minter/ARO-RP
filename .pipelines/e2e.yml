@@ -21,8 +21,5 @@ jobs:
   - template: ./templates/template-push-images-to-acr.yml
     parameters:
       rpImageACR: $(RP_IMAGE_ACR)
-  - template: ./templates/template-az-cli-set-context.yml
-  - template: ./templates/template-deploy-e2e-db.yml
-  - template: ./templates/template-dev-run-rp-and-e2e.yml
-  - template: ./templates/template-clean-e2e-db.yml
+  - template: ./templates/template-run-rp-and-e2e.yml
   - template: ./templates/template-az-cli-logout.yml

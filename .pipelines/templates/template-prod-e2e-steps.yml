@@ -4,15 +4,14 @@ parameters:
   azureDevOpsE2EJSONSPN: ''
 
 steps:
-# TODO(mj) we need to checkout code to run tooling like kubeconfig. This should go away once we refactor everything into golang.
-- template: ./template-checkout.yml
-- template: ./template-az-cli-login.yml
-  parameters:
-    azureDevOpsJSONSPN: ${{ parameters.azureDevOpsE2EJSONSPN }}
 - script: |
     set -e
     export LOCATION=${{ parameters.location }}
     export AZURE_SUBSCRIPTION_ID=${{ parameters.subscription }}
+
+    # TODO: need to fetch $RP_IMAGE_ACR and $ARO_VERSION_SA, ideally from the RP
+    # config.  Would be good to have the original git commit of the RP config
+    # and use it.
 
     trap 'rm -f devops-spn.json' EXIT
     base64 -d >devops-spn.json <<<${{ parameters.azureDevOpsE2EJSONSPN }}
@@ -21,23 +20,32 @@ steps:
     export AZURE_TENANT_ID=$(jq -r .tenantId <devops-spn.json)
 
     set -x
-    . ./hack/e2e/run-rp-and-e2e.sh
 
-    export CI=true
-    export ARO_IMAGE="$RP_IMAGE_ACR:$(get_e2e_image_version)"
-    export TEST_E2E="docker run \
-                --network host \
-                --env-file <(env | egrep 'AZURE|E2E|ARO') \
-                --env LOCATION \
-                --env CI \
-                --env RESOURCEGROUP \
-                --env CLUSTER \
-                --env RP_MODE \
-                --entrypoint e2e.test $ARO_IMAGE"
+    # TODO: in INT we should set RP_MODE=int and AZURE_FP_CLIENT_ID here and
+    # pass those into the e2e container.
 
-    export RESOURCEGROUP=$ARO_RESOURCEGROUP
-    export TEST_E2E=$TEST_E2E
+    VERSION=$(curl -sf "https://$ARO_VERSION_SA.blob.core.windows.net/rpversion/$LOCATION")
 
-    make test-e2e
+    # TODO: remove E2E_CREATE_CLUSTER, E2E_DELETE_CLUSTER below after next RP
+    # deployment.
+
+    # TODO: e2e.test arguments need to move inside the container somehow.  Maybe
+    # a short script inside the container?  :-|
+
+    docker run \
+      --rm \
+      --env CI=true \
+      --env E2E_CREATE_CLUSTER \
+      --env E2E_DELETE_CLUSTER \
+      --env AZURE_CLIENT_ID \
+      --env AZURE_CLIENT_SECRET \
+      --env AZURE_TENANT_ID \
+      --env AZURE_SUBSCRIPTION_ID \
+      --env LOCATION \
+      --env RESOURCEGROUP="v4-e2e-V$BUILD_BUILDID-$LOCATION" \
+      --env CLUSTER="v4-e2e-V$BUILD_BUILDID-$LOCATION" \
+      --entrypoint e2e.test \
+      "$RP_IMAGE_ACR:$VERSION" \
+      -test.timeout 180m -test.v -ginkgo.v
+
   displayName: 🚀 Run ${{ parameters.location }} E2E
-- template: ./template-az-cli-logout.yml

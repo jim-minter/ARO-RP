@@ -1,7 +1,6 @@
 SHELL = /bin/bash
 COMMIT = $(shell git rev-parse --short HEAD)$(shell [[ $$(git status --porcelain) = "" ]] || echo -dirty)
 ARO_IMAGE ?= ${RP_IMAGE_ACR}.azurecr.io/aro:$(COMMIT)
-TEST_E2E ?= go test ./test/e2e -tags e2e
 
 export CGO_CFLAGS=-Dgpgme_off_t=off_t
 
@@ -71,7 +70,7 @@ pyenv:
 secrets:
 	@[ "${SECRET_SA_ACCOUNT_NAME}" ] || ( echo ">> SECRET_SA_ACCOUNT_NAME is not set"; exit 1 )
 	rm -rf secrets
-	az storage blob download  --auth-mode login -n secrets.tar.gz -c secrets -f secrets.tar.gz --account-name ${SECRET_SA_ACCOUNT_NAME} >/dev/null
+	az storage blob download --auth-mode login -n secrets.tar.gz -c secrets -f secrets.tar.gz --account-name ${SECRET_SA_ACCOUNT_NAME} >/dev/null
 	tar -xzf secrets.tar.gz
 	rm secrets.tar.gz
 
@@ -84,8 +83,8 @@ secrets-update:
 e2e.test:
 	go test ./test/e2e -tags e2e -c -o e2e.test
 
-test-e2e:
-	${TEST_E2E} -test.timeout 180m -test.v -ginkgo.v
+test-e2e: e2e.test
+	./e2e.test -test.timeout 180m -test.v -ginkgo.v
 
 test-go: generate
 	go build ./...
